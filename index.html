@@ -14,12 +14,31 @@
     .frame{width:100%;max-width:720px;height:100%;max-height:calc(100vh - 120px);background:#111;border-radius:12px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
     .guide-img{width:100%;height:100%;object-fit:cover;display:block}
 
+    /* 倒计时器 */
+    .countdown{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;padding:6px 12px;border-radius:20px;font-size:14px;font-weight:600;z-index:100}
+    .countdown.expired{background:rgba(255,0,0,0.6);color:#ffcccc}
+
     /* 长按提示圈 */
     .press-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
     .progress-wrap{width:120px;height:120px;border-radius:999px;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center}
     .progress{position:relative;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center}
     .progress svg{position:absolute;inset:0;width:84px;height:84px}
     .progress .label{font-size:12px;color:#fff}
+
+    /* 微信长按菜单模拟 */
+    .wechat-menu{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);border-radius:12px;padding:8px;display:none;z-index:1000;backdrop-filter:blur(10px)}
+    .wechat-menu.show{display:block;animation:menuSlideUp 0.3s ease-out}
+    .wechat-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;color:#fff;font-size:16px;border-radius:8px;cursor:pointer;transition:background 0.2s}
+    .wechat-menu-item:hover{background:rgba(255,255,255,0.1)}
+    .wechat-menu-item:active{background:rgba(255,255,255,0.2)}
+    .wechat-menu-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+
+    /* 过期提示 */
+    .expired-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:50}
+    .expired-overlay.show{display:flex}
+    .expired-content{text-align:center;color:#fff}
+    .expired-title{font-size:20px;font-weight:600;margin-bottom:12px}
+    .expired-desc{font-size:16px;opacity:0.8;margin-bottom:20px}
 
     /* 底部按钮 */
     .footer{padding:12px;display:flex;gap:12px;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.35))}
@@ -30,6 +49,12 @@
     /* 小提示 */
     .hint{position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.45);padding:6px 10px;border-radius:8px;font-size:13px}
 
+    /* 动画 */
+    @keyframes menuSlideUp{
+      from{opacity:0;transform:translateX(-50%) translateY(20px)}
+      to{opacity:1;transform:translateX(-50%) translateY(0)}
+    }
+
     /* 响应式缩放 */
     @media (max-width:420px){.progress-wrap{width:92px;height:92px}.progress{width:64px;height:64px}.progress svg{width:64px;height:64px}}
   </style>
@@ -38,11 +63,24 @@
   <div class="page">
     <main class="hero">
       <div class="frame" id="frame">
+        <!-- 倒计时器 -->
+        <div class="countdown" id="countdown">
+          <span id="countdownText">110s</span>
+        </div>
+
         <!-- 提示文本 -->
-        <div class="hint">长按“立即支付”模拟扫码/收款操作</div>
+        <div class="hint">长按图片3秒执行支付操作</div>
 
         <!-- 图片，来自腾讯云 COS（替换下面的 URL 为你的对象存储地址） -->
-        <img id="guideImage" class="guide-img" src="https://zf-1318129705.cos.ap-nanjing.myqcloud.com/CleanShot%202025-08-11%20at%2003.44.06.png?q-sign-algorithm=sha1&q-ak=AKIDELlFi3MwVrqz3Oz1YKQhhmmqNrfd9wmiJJnvX0crPjewVO_R3E2gARsJfDB657PR&q-sign-time=1754855161;1754858761&q-key-time=1754855161;1754858761&q-header-list=host&q-url-param-list=ci-process&q-signature=f7182864930ce0fa66cdbe9f31f01d389c2d13bb&x-cos-security-token=NHi24oSqM8Kap3C4HJVihJ9B0sjA6nba644da82afb9fd7992c10c13226943be2caD4hyST5ULu38ZGB_Mqomo8GBjBgpcQKzUjBjEu6yExuSUi2oPghalpwdYBJpJYrwgootsQargyGhTp-HdXZLkHpfqIzZean-PWZbsm-cTWRUAPbONxkRFmpYtkWrTZOn5HSaudz7qTKcnA09XfeE0jmvsfvsouEWPuK0HVq2DRWkk_glVy5rmPGxySmQQv5U72rioGHP1PS8vnW850RuO04z_g8eOb6OpYlnkAQRZa_80NA0cVZTHasow9n8ZvwVWlwWBmf0FsK2GkxYd08g&ci-process=originImage" alt="收款引导图" />
+        <img id="guideImage" class="guide-img" src="https://your-bucket-1250000000.cos.ap-guangzhou.myqcloud.com/path/to/guide.jpg" alt="收款引导图" />
+
+        <!-- 过期提示覆盖层 -->
+        <div class="expired-overlay" id="expiredOverlay">
+          <div class="expired-content">
+            <div class="expired-title">二维码已过期</div>
+            <div class="expired-desc">请点击"重新获取"按钮刷新二维码</div>
+          </div>
+        </div>
 
         <!-- 长按进度环覆盖层（pointer-events: none，防止阻断按钮事件） -->
         <div class="press-overlay">
@@ -56,6 +94,26 @@
             </div>
           </div>
         </div>
+
+        <!-- 微信长按菜单模拟 -->
+        <div class="wechat-menu" id="wechatMenu">
+          <div class="wechat-menu-item" onclick="handleMenuAction('save')">
+            <div class="wechat-menu-icon">💾</div>
+            <span>保存图片</span>
+          </div>
+          <div class="wechat-menu-item" onclick="handleMenuAction('share')">
+            <div class="wechat-menu-icon">📤</div>
+            <span>发送给朋友</span>
+          </div>
+          <div class="wechat-menu-item" onclick="handleMenuAction('collect')">
+            <div class="wechat-menu-icon">⭐</div>
+            <span>收藏</span>
+          </div>
+          <div class="wechat-menu-item" onclick="handleMenuAction('copy')">
+            <div class="wechat-menu-icon">📋</div>
+            <span>复制图片</span>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -67,26 +125,78 @@
 
   <script>
     // 配置
-    const LONG_PRESS_MS = 1800; // 触发长按所需时长（ms）
+    const LONG_PRESS_MS = 3000; // 触发长按所需时长（3秒）
+    const COUNTDOWN_SECONDS = 110; // 倒计时秒数
     const guideImage = document.getElementById('guideImage');
     const reloadBtn = document.getElementById('reloadBtn');
     const payBtn = document.getElementById('payBtn');
     const arc = document.getElementById('arc');
     const progressLabel = document.getElementById('progressLabel');
+    const wechatMenu = document.getElementById('wechatMenu');
+    const countdown = document.getElementById('countdown');
+    const countdownText = document.getElementById('countdownText');
+    const expiredOverlay = document.getElementById('expiredOverlay');
 
-    // 重新获取图像（带防缓存参数）
-    function reloadImage(){
-      const src = guideImage.getAttribute('data-src') || guideImage.src;
-      const sep = src.includes('?') ? '&' : '?';
-      const newSrc = src.split('?')[0] + sep + 't=' + Date.now();
-      guideImage.src = newSrc;
-      // 保存原始 data-src，避免重复添加参数
-      guideImage.setAttribute('data-src', src.split('?')[0]);
-      progressLabel.textContent = '已重新获取';
-      setTimeout(()=>{ progressLabel.textContent = '等待长按'; },900);
+    // 倒计时相关变量
+    let countdownTimer = null;
+    let remainingSeconds = COUNTDOWN_SECONDS;
+    let isExpired = false;
+
+    // 初始化倒计时
+    function initCountdown() {
+      remainingSeconds = COUNTDOWN_SECONDS;
+      isExpired = false;
+      updateCountdownDisplay();
+      startCountdown();
     }
 
-    reloadBtn.addEventListener('click', reloadImage);
+    // 开始倒计时
+    function startCountdown() {
+      if (countdownTimer) clearInterval(countdownTimer);
+      
+      countdownTimer = setInterval(() => {
+        remainingSeconds--;
+        updateCountdownDisplay();
+        
+        if (remainingSeconds <= 0) {
+          clearInterval(countdownTimer);
+          handleExpired();
+        }
+      }, 1000);
+    }
+
+    // 更新倒计时显示
+    function updateCountdownDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      countdownText.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      
+      // 当剩余时间少于30秒时，改变颜色
+      if (remainingSeconds <= 30) {
+        countdown.classList.add('expired');
+      } else {
+        countdown.classList.remove('expired');
+      }
+    }
+
+    // 处理过期
+    function handleExpired() {
+      isExpired = true;
+      expiredOverlay.classList.add('show');
+      countdown.classList.add('expired');
+      countdownText.textContent = '已过期';
+      
+      // 禁用支付按钮
+      payBtn.disabled = true;
+      payBtn.style.opacity = '0.5';
+    }
+
+    // 重新获取按钮 - 刷新页面
+    function reloadPage() {
+      window.location.reload();
+    }
+
+    reloadBtn.addEventListener('click', reloadPage);
 
     // 模拟长按（支持鼠标和触摸）
     let pressTimer = null;
@@ -101,7 +211,7 @@
     }
 
     function startPress(){
-      if(pressTimer) return;
+      if(pressTimer || isExpired) return;
       startTime = performance.now();
       progressLabel.textContent = '长按中...';
       pressTimer = setTimeout(()=>{
@@ -131,45 +241,137 @@
       clearTimeout(pressTimer); pressTimer = null;
       if(rafId) cancelAnimationFrame(rafId); rafId = null;
       setArcProgress(1);
-      progressLabel.textContent = success ? '完成' : '失败';
+      progressLabel.textContent = success ? '长按完成' : '失败';
 
       // 模拟支付成功后的动作
       if(success){
-        // 这里可以替换为真实的支付回调、跳转或其他逻辑
+        // 显示微信长按菜单
         setTimeout(()=>{
-          alert('支付已完成（模拟）');
-          progressLabel.textContent = '等待长按';
-          setArcProgress(0);
+          showWechatMenu();
+          progressLabel.textContent = '菜单已显示';
         }, 300);
       } else {
         setTimeout(()=>{ progressLabel.textContent = '等待长按'; setArcProgress(0); },500);
       }
     }
 
-    // 绑定事件到按钮（支持 touch + mouse）
-    function bindPressElement(el){
-      // Touch
-      el.addEventListener('touchstart', (e)=>{ e.preventDefault(); startPress(); });
-      el.addEventListener('touchend', (e)=>{ e.preventDefault(); cancelPress(); });
-      el.addEventListener('touchmove', (e)=>{ /* 如果想在移动时取消，可判断移动距离 */ });
-
-      // Mouse
-      el.addEventListener('mousedown', (e)=>{ e.preventDefault(); startPress(); });
-      window.addEventListener('mouseup', (e)=>{ if(pressTimer) cancelPress(); });
-
-      // 点击触发（短按）也可以给出反馈
-      el.addEventListener('click', (e)=>{ e.preventDefault(); /* 阻止默认短按行为 */ });
+    // 显示微信长按菜单
+    function showWechatMenu(){
+      wechatMenu.classList.add('show');
+      // 3秒后自动隐藏菜单
+      setTimeout(() => {
+        hideWechatMenu();
+      }, 3000);
     }
 
-    // 如果希望“立即支付”也能做普通点击（短按）触发提示，保留 click 逻辑
-    payBtn.addEventListener('click', (e)=>{
-      // 这里不执行支付，长按才会真正触发。短按给用户提示
-      progressLabel.textContent = '请长按以确认支付';
-      setTimeout(()=> progressLabel.textContent = '等待长按', 1200);
-    });
+    // 隐藏微信长按菜单
+    function hideWechatMenu(){
+      wechatMenu.classList.remove('show');
+      progressLabel.textContent = '等待长按';
+      setArcProgress(0);
+    }
 
-    // 绑定长按到立即支付按钮
-    bindPressElement(payBtn);
+    // 处理菜单操作
+    function handleMenuAction(action){
+      let message = '';
+      switch(action) {
+        case 'save':
+          message = '图片已保存到相册';
+          break;
+        case 'share':
+          message = '已发送给朋友';
+          break;
+        case 'collect':
+          message = '已收藏';
+          break;
+        case 'copy':
+          message = '图片已复制';
+          break;
+      }
+      
+      // 显示操作反馈
+      progressLabel.textContent = message;
+      hideWechatMenu();
+      
+      // 2秒后重置状态
+      setTimeout(() => {
+        progressLabel.textContent = '等待长按';
+      }, 2000);
+    }
+
+    // 绑定长按事件到图片
+    function bindPressToImage(){
+      // Touch
+      guideImage.addEventListener('touchstart', (e)=>{ 
+        if (!isExpired) {
+          e.preventDefault(); 
+          startPress(); 
+        }
+      });
+      guideImage.addEventListener('touchend', (e)=>{ 
+        if (!isExpired) {
+          e.preventDefault(); 
+          cancelPress(); 
+        }
+      });
+      guideImage.addEventListener('touchmove', (e)=>{ 
+        if (!isExpired) {
+          // 如果想在移动时取消，可判断移动距离
+        }
+      });
+
+      // Mouse
+      guideImage.addEventListener('mousedown', (e)=>{ 
+        if (!isExpired) {
+          e.preventDefault(); 
+          startPress(); 
+        }
+      });
+      window.addEventListener('mouseup', (e)=>{ 
+        if(pressTimer && !isExpired) cancelPress(); 
+      });
+
+      // 点击触发（短按）也可以给出反馈
+      guideImage.addEventListener('click', (e)=>{ 
+        if (!isExpired) {
+          e.preventDefault(); 
+          progressLabel.textContent = '请长按3秒执行支付';
+          setTimeout(() => progressLabel.textContent = '等待长按', 1500);
+        }
+      });
+    }
+
+    // 立即支付按钮点击事件 - 触发长按图片操作
+    payBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      
+      if (isExpired) {
+        alert('二维码已过期，请重新获取');
+        return;
+      }
+      
+      // 模拟点击图片触发长按
+      progressLabel.textContent = '开始长按图片...';
+      setArcProgress(0);
+      
+      // 模拟3秒长按过程
+      startTime = performance.now();
+      pressTimer = setTimeout(() => {
+        finishPress(true);
+      }, LONG_PRESS_MS);
+      
+      // 更新进度环
+      function tick(){
+        const now = performance.now();
+        const elapsed = now - startTime;
+        let p = Math.min(1, elapsed / LONG_PRESS_MS);
+        setArcProgress(p);
+        if(p < 1){ 
+          rafId = requestAnimationFrame(tick); 
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    });
 
     // 首次加载时保存 data-src
     guideImage.addEventListener('load', ()=>{
@@ -181,8 +383,14 @@
       guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">图片加载失败，点击重新获取</text></svg>');
     });
 
+    // 绑定长按事件到图片
+    bindPressToImage();
+
     // 触发首次保存
     if(!guideImage.getAttribute('data-src')) guideImage.setAttribute('data-src', guideImage.src);
+
+    // 初始化倒计时
+    initCountdown();
   </script>
 </body>
 </html>
