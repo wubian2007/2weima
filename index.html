@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>收款中心引导 - 手机端</title>
+  <style>
+    :root{--bg:#0b0b0b;--btn-height:58px;--accent:#ff6b00}
+    html,body{height:100%;margin:0;font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft Yahei", Arial; background:var(--bg); color:#fff}
+    .page{min-height:100vh;display:flex;flex-direction:column}
+
+    /* 顶部区域 - 图片容器（等比最大化，保持在可视区） */
+    .hero{flex:1;display:flex;align-items:center;justify-content:center;padding:18px}
+    .frame{width:100%;max-width:720px;height:100%;max-height:calc(100vh - 120px);background:#111;border-radius:12px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+    .guide-img{width:100%;height:100%;object-fit:cover;display:block}
+
+    /* 长按提示圈 */
+    .press-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .progress-wrap{width:120px;height:120px;border-radius:999px;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center}
+    .progress{position:relative;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .progress svg{position:absolute;inset:0;width:84px;height:84px}
+    .progress .label{font-size:12px;color:#fff}
+
+    /* 底部按钮 */
+    .footer{padding:12px;display:flex;gap:12px;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.35))}
+    .btn{flex:1;max-width:360px;height:var(--btn-height);border-radius:10px;border:0;font-size:18px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn.primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(255,107,0,0.18)}
+    .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.08)}
+
+    /* 小提示 */
+    .hint{position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.45);padding:6px 10px;border-radius:8px;font-size:13px}
+
+    /* 响应式缩放 */
+    @media (max-width:420px){.progress-wrap{width:92px;height:92px}.progress{width:64px;height:64px}.progress svg{width:64px;height:64px}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <main class="hero">
+      <div class="frame" id="frame">
+        <!-- 提示文本 -->
+        <div class="hint">长按“立即支付”模拟扫码/收款操作</div>
+
+        <!-- 图片，来自腾讯云 COS（替换下面的 URL 为你的对象存储地址） -->
+        <img id="guideImage" class="guide-img" src="https://your-bucket-1250000000.cos.ap-guangzhou.myqcloud.com/path/to/guide.jpg" alt="收款引导图" />
+
+        <!-- 长按进度环覆盖层（pointer-events: none，防止阻断按钮事件） -->
+        <div class="press-overlay">
+          <div class="progress-wrap" aria-hidden="true">
+            <div class="progress" id="progress">
+              <svg viewBox="0 0 36 36">
+                <path stroke="rgba(255,255,255,0.12)" stroke-width="2.5" fill="none" d="M18 2.0845a15.9155 15.9155 0 1 0 0 31.831" />
+                <path id="arc" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none" d="M18 2.0845a15.9155 15.9155 0 1 0 0 31.831" stroke-dasharray="0 100" />
+              </svg>
+              <div class="label" id="progressLabel">等待长按</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <button id="reloadBtn" class="btn ghost">重新获取</button>
+      <button id="payBtn" class="btn primary">立即支付</button>
+    </footer>
+  </div>
+
+  <script>
+    // 配置
+    const LONG_PRESS_MS = 1800; // 触发长按所需时长（ms）
+    const guideImage = document.getElementById('guideImage');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const payBtn = document.getElementById('payBtn');
+    const arc = document.getElementById('arc');
+    const progressLabel = document.getElementById('progressLabel');
+
+    // 重新获取图像（带防缓存参数）
+    function reloadImage(){
+      const src = guideImage.getAttribute('data-src') || guideImage.src;
+      const sep = src.includes('?') ? '&' : '?';
+      const newSrc = src.split('?')[0] + sep + 't=' + Date.now();
+      guideImage.src = newSrc;
+      // 保存原始 data-src，避免重复添加参数
+      guideImage.setAttribute('data-src', src.split('?')[0]);
+      progressLabel.textContent = '已重新获取';
+      setTimeout(()=>{ progressLabel.textContent = '等待长按'; },900);
+    }
+
+    reloadBtn.addEventListener('click', reloadImage);
+
+    // 模拟长按（支持鼠标和触摸）
+    let pressTimer = null;
+    let startTime = 0;
+    let rafId = null;
+
+    function setArcProgress(p){
+      // p in [0,1]
+      const total = 100;
+      const dash = (p * total).toFixed(2);
+      arc.setAttribute('stroke-dasharray', dash + ' ' + total);
+    }
+
+    function startPress(){
+      if(pressTimer) return;
+      startTime = performance.now();
+      progressLabel.textContent = '长按中...';
+      pressTimer = setTimeout(()=>{
+        finishPress(true);
+      }, LONG_PRESS_MS);
+      // 用 RAF 更新进度环
+      function tick(){
+        const now = performance.now();
+        const elapsed = now - startTime;
+        let p = Math.min(1, elapsed / LONG_PRESS_MS);
+        setArcProgress(p);
+        if(p < 1){ rafId = requestAnimationFrame(tick); }
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function cancelPress(){
+      if(!pressTimer) return;
+      clearTimeout(pressTimer); pressTimer = null;
+      if(rafId) cancelAnimationFrame(rafId); rafId = null;
+      setArcProgress(0);
+      progressLabel.textContent = '已取消';
+      setTimeout(()=> progressLabel.textContent = '等待长按', 700);
+    }
+
+    function finishPress(success){
+      clearTimeout(pressTimer); pressTimer = null;
+      if(rafId) cancelAnimationFrame(rafId); rafId = null;
+      setArcProgress(1);
+      progressLabel.textContent = success ? '完成' : '失败';
+
+      // 模拟支付成功后的动作
+      if(success){
+        // 这里可以替换为真实的支付回调、跳转或其他逻辑
+        setTimeout(()=>{
+          alert('支付已完成（模拟）');
+          progressLabel.textContent = '等待长按';
+          setArcProgress(0);
+        }, 300);
+      } else {
+        setTimeout(()=>{ progressLabel.textContent = '等待长按'; setArcProgress(0); },500);
+      }
+    }
+
+    // 绑定事件到按钮（支持 touch + mouse）
+    function bindPressElement(el){
+      // Touch
+      el.addEventListener('touchstart', (e)=>{ e.preventDefault(); startPress(); });
+      el.addEventListener('touchend', (e)=>{ e.preventDefault(); cancelPress(); });
+      el.addEventListener('touchmove', (e)=>{ /* 如果想在移动时取消，可判断移动距离 */ });
+
+      // Mouse
+      el.addEventListener('mousedown', (e)=>{ e.preventDefault(); startPress(); });
+      window.addEventListener('mouseup', (e)=>{ if(pressTimer) cancelPress(); });
+
+      // 点击触发（短按）也可以给出反馈
+      el.addEventListener('click', (e)=>{ e.preventDefault(); /* 阻止默认短按行为 */ });
+    }
+
+    // 如果希望“立即支付”也能做普通点击（短按）触发提示，保留 click 逻辑
+    payBtn.addEventListener('click', (e)=>{
+      // 这里不执行支付，长按才会真正触发。短按给用户提示
+      progressLabel.textContent = '请长按以确认支付';
+      setTimeout(()=> progressLabel.textContent = '等待长按', 1200);
+    });
+
+    // 绑定长按到立即支付按钮
+    bindPressElement(payBtn);
+
+    // 首次加载时保存 data-src
+    guideImage.addEventListener('load', ()=>{
+      if(!guideImage.getAttribute('data-src')) guideImage.setAttribute('data-src', guideImage.src);
+    });
+
+    // Optional: 如果想在图片加载失败时给出备用图
+    guideImage.addEventListener('error', ()=>{
+      guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">图片加载失败，点击重新获取</text></svg>');
+    });
+
+    // 触发首次保存
+    if(!guideImage.getAttribute('data-src')) guideImage.setAttribute('data-src', guideImage.src);
+  </script>
+</body>
+</html>
