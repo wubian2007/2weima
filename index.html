@@ -18,21 +18,6 @@
     .countdown{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;padding:6px 12px;border-radius:20px;font-size:14px;font-weight:600;z-index:100}
     .countdown.expired{background:rgba(255,0,0,0.6);color:#ffcccc}
 
-    /* 长按提示圈 */
-    .press-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-    .progress-wrap{width:120px;height:120px;border-radius:999px;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center}
-    .progress{position:relative;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-    .progress svg{position:absolute;inset:0;width:84px;height:84px}
-    .progress .label{font-size:12px;color:#fff}
-
-    /* 微信长按菜单模拟 */
-    .wechat-menu{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);border-radius:12px;padding:8px;display:none;z-index:1000;backdrop-filter:blur(10px)}
-    .wechat-menu.show{display:block;animation:menuSlideUp 0.3s ease-out}
-    .wechat-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;color:#fff;font-size:16px;border-radius:8px;cursor:pointer;transition:background 0.2s}
-    .wechat-menu-item:hover{background:rgba(255,255,255,0.1)}
-    .wechat-menu-item:active{background:rgba(255,255,255,0.2)}
-    .wechat-menu-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
-
     /* 过期提示 */
     .expired-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:50}
     .expired-overlay.show{display:flex}
@@ -48,15 +33,6 @@
 
     /* 小提示 */
     .hint{position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.45);padding:6px 10px;border-radius:8px;font-size:13px}
-
-    /* 动画 */
-    @keyframes menuSlideUp{
-      from{opacity:0;transform:translateX(-50%) translateY(20px)}
-      to{opacity:1;transform:translateX(-50%) translateY(0)}
-    }
-
-    /* 响应式缩放 */
-    @media (max-width:420px){.progress-wrap{width:92px;height:92px}.progress{width:64px;height:64px}.progress svg{width:64px;height:64px}}
   </style>
 </head>
 <body>
@@ -69,7 +45,7 @@
         </div>
 
         <!-- 提示文本 -->
-        <div class="hint">长按识别支付</div>
+        <div class="hint">扫码支付</div>
 
         <!-- 图片，使用base64数据或后台配置的地址 -->
         <img id="guideImage" class="guide-img" src="" alt="收款引导图" />
@@ -81,45 +57,12 @@
             <div class="expired-desc">点击刷新</div>
           </div>
         </div>
-
-        <!-- 长按进度环覆盖层（pointer-events: none，防止阻断按钮事件） -->
-        <div class="press-overlay">
-          <div class="progress-wrap" aria-hidden="true">
-            <div class="progress" id="progress">
-              <svg viewBox="0 0 36 36">
-                <path stroke="rgba(255,255,255,0.12)" stroke-width="2.5" fill="none" d="M18 2.0845a15.9155 15.9155 0 1 0 0 31.831" />
-                <path id="arc" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none" d="M18 2.0845a15.9155 15.9155 0 1 0 0 31.831" stroke-dasharray="0 100" />
-              </svg>
-              <div class="label" id="progressLabel">等待长按</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 微信长按菜单模拟 -->
-        <div class="wechat-menu" id="wechatMenu">
-          <div class="wechat-menu-item" onclick="handleMenuAction('save')">
-            <div class="wechat-menu-icon">💾</div>
-            <span>保存图片</span>
-          </div>
-          <div class="wechat-menu-item" onclick="handleMenuAction('share')">
-            <div class="wechat-menu-icon">📤</div>
-            <span>发送给朋友</span>
-          </div>
-          <div class="wechat-menu-item" onclick="handleMenuAction('collect')">
-            <div class="wechat-menu-icon">⭐</div>
-            <span>收藏</span>
-          </div>
-          <div class="wechat-menu-item" onclick="handleMenuAction('copy')">
-            <div class="wechat-menu-icon">📋</div>
-            <span>复制图片</span>
-          </div>
-        </div>
       </div>
     </main>
 
     <footer class="footer">
       <button id="reloadBtn" class="btn ghost">刷新二维码</button>
-      <button id="payBtn" class="btn primary">长按识别支付</button>
+      <button id="payBtn" class="btn primary">立即支付</button>
     </footer>
   </div>
 
@@ -128,14 +71,10 @@
 
   <script>
     // 配置
-    const LONG_PRESS_MS = 3000; // 触发长按所需时长（3秒）
     const COUNTDOWN_SECONDS = 110; // 倒计时秒数
     const guideImage = document.getElementById('guideImage');
     const reloadBtn = document.getElementById('reloadBtn');
     const payBtn = document.getElementById('payBtn');
-    const arc = document.getElementById('arc');
-    const progressLabel = document.getElementById('progressLabel');
-    const wechatMenu = document.getElementById('wechatMenu');
     const countdown = document.getElementById('countdown');
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
@@ -262,150 +201,23 @@
       showStatus('正在刷新二维码...', 'info');
     }
 
+    // 支付按钮点击事件
+    function handlePayClick() {
+      if (isExpired) {
+        alert('二维码已过期，请刷新二维码');
+        return;
+      }
+      
+      // 这里可以添加支付逻辑，比如跳转到支付页面或显示支付提示
+      alert('正在跳转到支付页面...');
+      
+      // 示例：可以在这里添加实际的支付跳转逻辑
+      // window.location.href = '支付页面URL';
+    }
+
+    // 绑定事件
     reloadBtn.addEventListener('click', refreshQRCode);
-
-    // 模拟长按（支持鼠标和触摸）
-    let pressTimer = null;
-    let startTime = 0;
-    let rafId = null;
-
-    function setArcProgress(p){
-      // p in [0,1]
-      const total = 100;
-      const dash = (p * total).toFixed(2);
-      arc.setAttribute('stroke-dasharray', dash + ' ' + total);
-    }
-
-    function startPress(){
-      if(pressTimer || isExpired) return;
-      startTime = performance.now();
-      progressLabel.textContent = '长按中...';
-      pressTimer = setTimeout(()=>{
-        finishPress(true);
-      }, LONG_PRESS_MS);
-      // 用 RAF 更新进度环
-      function tick(){
-        const now = performance.now();
-        const elapsed = now - startTime;
-        let p = Math.min(1, elapsed / LONG_PRESS_MS);
-        setArcProgress(p);
-        if(p < 1){ rafId = requestAnimationFrame(tick); }
-      }
-      rafId = requestAnimationFrame(tick);
-    }
-
-    function cancelPress(){
-      if(!pressTimer) return;
-      clearTimeout(pressTimer); pressTimer = null;
-      if(rafId) cancelAnimationFrame(rafId); rafId = null;
-      setArcProgress(0);
-      progressLabel.textContent = '已取消';
-      setTimeout(()=> progressLabel.textContent = '等待长按', 700);
-    }
-
-    function finishPress(success){
-      clearTimeout(pressTimer); pressTimer = null;
-      if(rafId) cancelAnimationFrame(rafId); rafId = null;
-      setArcProgress(1);
-      progressLabel.textContent = success ? '长按完成' : '失败';
-
-      // 模拟支付成功后的动作
-      if(success){
-        // 显示微信长按菜单
-        setTimeout(()=>{
-          showWechatMenu();
-          progressLabel.textContent = '菜单已显示';
-        }, 300);
-      } else {
-        setTimeout(()=>{ progressLabel.textContent = '等待长按'; setArcProgress(0); },500);
-      }
-    }
-
-    // 显示微信长按菜单
-    function showWechatMenu(){
-      wechatMenu.classList.add('show');
-      // 3秒后自动隐藏菜单
-      setTimeout(() => {
-        hideWechatMenu();
-      }, 3000);
-    }
-
-    // 隐藏微信长按菜单
-    function hideWechatMenu(){
-      wechatMenu.classList.remove('show');
-      progressLabel.textContent = '等待长按';
-      setArcProgress(0);
-    }
-
-    // 处理菜单操作
-    function handleMenuAction(action){
-      let message = '';
-      switch(action) {
-        case 'save':
-          message = '图片已保存到相册';
-          break;
-        case 'share':
-          message = '已发送给朋友';
-          break;
-        case 'collect':
-          message = '已收藏';
-          break;
-        case 'copy':
-          message = '图片已复制';
-          break;
-      }
-      
-      // 显示操作反馈
-      progressLabel.textContent = message;
-      hideWechatMenu();
-      
-      // 2秒后重置状态
-      setTimeout(() => {
-        progressLabel.textContent = '等待长按';
-      }, 2000);
-    }
-
-    // 绑定长按事件到支付按钮
-    function bindPressToPayButton(){
-      // Touch
-      payBtn.addEventListener('touchstart', (e)=>{ 
-        if (!isExpired) {
-          e.preventDefault(); 
-          startPress(); 
-        }
-      });
-      payBtn.addEventListener('touchend', (e)=>{ 
-        if (!isExpired) {
-          e.preventDefault(); 
-          cancelPress(); 
-        }
-      });
-      payBtn.addEventListener('touchmove', (e)=>{ 
-        if (!isExpired) {
-          // 如果想在移动时取消，可判断移动距离
-        }
-      });
-
-      // Mouse
-      payBtn.addEventListener('mousedown', (e)=>{ 
-        if (!isExpired) {
-          e.preventDefault(); 
-          startPress(); 
-        }
-      });
-      window.addEventListener('mouseup', (e)=>{ 
-        if(pressTimer && !isExpired) cancelPress(); 
-      });
-
-      // 点击触发（短按）也可以给出反馈
-      payBtn.addEventListener('click', (e)=>{ 
-        if (!isExpired) {
-          e.preventDefault(); 
-          progressLabel.textContent = '请长按3秒识别支付';
-          setTimeout(() => progressLabel.textContent = '等待长按', 1500);
-        }
-      });
-    }
+    payBtn.addEventListener('click', handlePayClick);
 
     // 显示状态提示
     function showStatus(message, type) {
@@ -430,9 +242,6 @@
         }
       }
     });
-
-    // 绑定长按事件到支付按钮
-    bindPressToPayButton();
 
     // 初始化图片和倒计时
     setImageSource();
