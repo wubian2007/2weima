@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "github-api": "node github-api-server.js",
+    "github-api-dev": "nodemon github-api-server.js"
   },
   "keywords": [
     "image",
