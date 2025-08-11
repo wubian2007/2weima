@@ -12,6 +12,7 @@
 SERVER_HOST="119.28.19.237"
 SERVER_USER="root"
 SERVER_PATH="/www/wwwroot/2weima"
+DOMAIN="9gtu.com"
 GIT_REPO="https://github.com/wubian2007/2weima.git"
 
 # 颜色输出
@@ -129,7 +130,8 @@ EOF
 
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✅ 服务器同步成功！${NC}"
-        echo -e "${GREEN}🌐 网站地址: http://${SERVER_HOST}${NC}"
+        echo -e "${GREEN}🌐 网站地址: https://${DOMAIN}${NC}"
+        echo -e "${GREEN}🌐 备用地址: http://${SERVER_HOST}${NC}"
         return 0
     else
         echo -e "${RED}❌ 服务器同步失败${NC}"

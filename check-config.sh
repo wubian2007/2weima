@@ -36,10 +36,10 @@ else
     echo -e "  ${GREEN}✅ 服务器IP: $SERVER_IP${NC}"
 fi
 
-if grep -q "your-domain.com" nginx.conf; then
-    echo -e "  ${RED}❌ 域名未配置${NC}"
+if grep -q "DOMAIN=\"9gtu.com\"" bt-sync.sh; then
+    echo -e "  ${GREEN}✅ 域名已配置: 9gtu.com${NC}"
 else
-    echo -e "  ${GREEN}✅ 域名已配置${NC}"
+    echo -e "  ${RED}❌ 域名未配置${NC}"
 fi
 
 echo ""
