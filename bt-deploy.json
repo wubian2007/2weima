@@ -1,0 +1,31 @@
+{
+  "server": {
+    "host": "your-server-ip",
+    "user": "root",
+    "port": 22,
+    "path": "/www/wwwroot/2weima"
+  },
+  "nginx": {
+    "config_path": "/www/server/panel/vhost/nginx/2weima.conf",
+    "ssl": true,
+    "domain": "your-domain.com"
+  },
+  "pm2": {
+    "name": "2weima",
+    "script": "server.js",
+    "instances": 1,
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": 3000
+    }
+  },
+  "github": {
+    "webhook": true,
+    "secret": "your-webhook-secret"
+  },
+  "backup": {
+    "enabled": true,
+    "path": "/www/backup/2weima",
+    "retention": 7
+  }
+}
