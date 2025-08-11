@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft Yahei", Arial;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,107,107,0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.show {
+            display: block;
+        }
+
+        .login-form {
+            display: block;
+        }
+
+        .login-form.hide {
+            display: none;
+        }
+
+        .welcome-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .welcome-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .logout-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff6b6b;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .current-config {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .current-config h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .current-config p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .current-config .value {
+            color: #333;
+            font-weight: 600;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 后台管理系统</h1>
+            <p>管理图片URL地址和倒计时配置</p>
+        </div>
+
+        <div class="content">
+            <!-- 登录表单 -->
+            <div class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+                <button class="btn btn-primary" onclick="login()">登录</button>
+                
+                <!-- 默认账户提示 -->
+                <div style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">
+                    <p>默认账户：admin / admin123</p>
+                </div>
+            </div>
+
+            <!-- 管理面板 -->
+            <div class="dashboard" id="dashboard">
+                <div class="welcome-section">
+                    <h3>👋 欢迎回来，<span id="userDisplay">管理员</span></h3>
+                    <p>上次登录时间：<span id="lastLogin">-</span></p>
+                </div>
+
+                <!-- 当前配置显示 -->
+                <div class="current-config" id="currentConfig">
+                    <h4>📋 当前配置</h4>
+                    <p>图片URL：<span class="value" id="currentImageUrl">未配置</span></p>
+                    <p>倒计时：<span class="value" id="currentCountdown">110秒</span></p>
+                </div>
+
+                <div class="config-section">
+                    <h3>⚙️ 系统配置</h3>
+                    <div class="form-group">
+                        <label for="imageUrl">图片URL地址</label>
+                        <input type="url" id="imageUrl" placeholder="请输入图片URL地址">
+                    </div>
+                    <div class="form-group">
+                        <label for="countdownSeconds">倒计时秒数</label>
+                        <input type="number" id="countdownSeconds" value="110" min="10" max="600" placeholder="请输入倒计时秒数">
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button>
+                    <button class="btn btn-secondary" onclick="testImage()">🖼️ 测试图片</button>
+                </div>
+
+                <div class="logout-section">
+                    <button class="btn btn-secondary" onclick="logout()">🚪 退出登录</button>
+                </div>
+            </div>
+
+            <!-- 状态提示 -->
+            <div class="status" id="status"></div>
+
+            <!-- 加载提示 -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>正在处理...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 默认账户信息
+        const DEFAULT_USERNAME = 'admin';
+        const DEFAULT_PASSWORD = 'admin123';
+
+        // 页面元素
+        const loginForm = document.getElementById('loginForm');
+        const dashboard = document.getElementById('dashboard');
+        const username = document.getElementById('username');
+        const password = document.getElementById('password');
+        const userDisplay = document.getElementById('userDisplay');
+        const lastLogin = document.getElementById('lastLogin');
+        const imageUrl = document.getElementById('imageUrl');
+        const countdownSeconds = document.getElementById('countdownSeconds');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
+        const currentImageUrl = document.getElementById('currentImageUrl');
+        const currentCountdown = document.getElementById('currentCountdown');
+
+        // 初始化
+        init();
+
+        function init() {
+            // 检查是否已登录
+            const isLoggedIn = localStorage.getItem('adminLoggedIn');
+            if (isLoggedIn === 'true') {
+                showDashboard();
+                loadConfig();
+            }
+
+            // 加载配置
+            loadConfig();
+        }
+
+        // 登录
+        function login() {
+            const user = username.value.trim();
+            const pwd = password.value.trim();
+
+            if (!user || !pwd) {
+                showStatus('请输入用户名和密码', 'error');
+                return;
+            }
+
+            if (user === DEFAULT_USERNAME && pwd === DEFAULT_PASSWORD) {
+                // 保存登录状态
+                localStorage.setItem('adminLoggedIn', 'true');
+                localStorage.setItem('adminUsername', user);
+                localStorage.setItem('lastLogin', new Date().toLocaleString());
+
+                showDashboard();
+                showStatus('登录成功', 'success');
+            } else {
+                showStatus('用户名或密码错误', 'error');
+            }
+        }
+
+        // 显示管理面板
+        function showDashboard() {
+            loginForm.classList.add('hide');
+            dashboard.classList.add('show');
+            
+            // 显示用户信息
+            const savedUsername = localStorage.getItem('adminUsername') || DEFAULT_USERNAME;
+            const savedLastLogin = localStorage.getItem('lastLogin') || '-';
+            
+            userDisplay.textContent = savedUsername;
+            lastLogin.textContent = savedLastLogin;
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminUsername');
+            
+            loginForm.classList.remove('hide');
+            dashboard.classList.remove('show');
+            
+            username.value = '';
+            password.value = '';
+            
+            showStatus('已退出登录', 'success');
+        }
+
+        // 加载配置
+        function loadConfig() {
+            const savedImageUrl = localStorage.getItem('imageUrl') || '';
+            const savedCountdown = localStorage.getItem('countdownSeconds') || '110';
+
+            imageUrl.value = savedImageUrl;
+            countdownSeconds.value = savedCountdown;
+
+            // 更新当前配置显示
+            updateCurrentConfig();
+        }
+
+        // 保存配置
+        function saveConfig() {
+            const url = imageUrl.value.trim();
+            const countdown = countdownSeconds.value.trim();
+
+            if (!url) {
+                showStatus('请输入图片URL地址', 'error');
+                return;
+            }
+
+            if (!countdown || countdown < 10 || countdown > 600) {
+                showStatus('倒计时秒数必须在10-600秒之间', 'error');
+                return;
+            }
+
+            // 保存到本地存储
+            localStorage.setItem('imageUrl', url);
+            localStorage.setItem('countdownSeconds', countdown);
+            
+            // 记录保存时间，用于倒计时计算
+            localStorage.setItem('configSaveTime', Date.now().toString());
+
+            // 更新当前配置显示
+            updateCurrentConfig();
+
+            showStatus('配置已保存成功，倒计时已开始', 'success');
+        }
+
+        // 更新当前配置显示
+        function updateCurrentConfig() {
+            const savedImageUrl = localStorage.getItem('imageUrl') || '';
+            const savedCountdown = localStorage.getItem('countdownSeconds') || '110';
+            const saveTime = localStorage.getItem('configSaveTime');
+
+            currentImageUrl.textContent = savedImageUrl || '未配置';
+            currentCountdown.textContent = savedCountdown + '秒';
+
+            // 如果有保存时间，计算剩余时间
+            if (saveTime && savedImageUrl) {
+                const elapsed = Math.floor((Date.now() - parseInt(saveTime)) / 1000);
+                const remaining = parseInt(savedCountdown) - elapsed;
+                
+                if (remaining > 0) {
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    currentCountdown.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} (剩余)`;
+                } else {
+                    currentCountdown.textContent = '已过期，请上传新图片';
+                    currentCountdown.style.color = '#dc3545';
+                }
+            }
+        }
+
+        // 定期更新倒计时显示
+        function startCountdownUpdate() {
+            setInterval(() => {
+                updateCurrentConfig();
+            }, 1000);
+        }
+
+        // 初始化时启动倒计时更新
+        startCountdownUpdate();
+
+        // 测试图片
+        function testImage() {
+            const url = imageUrl.value.trim();
+            if (!url) {
+                showStatus('请先输入图片URL地址', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            // 创建测试图片元素
+            const img = new Image();
+            img.onload = function() {
+                showLoading(false);
+                showStatus('图片加载成功', 'success');
+            };
+            img.onerror = function() {
+                showLoading(false);
+                showStatus('图片加载失败，请检查URL是否正确', 'error');
+            };
+            img.src = url;
+        }
+
+        // 显示状态
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // 回车键登录
+        password.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>

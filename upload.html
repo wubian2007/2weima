@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片上传</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft Yahei", Arial;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #ff6b6b;
+            background: #f8f9fa;
+        }
+
+        .upload-area.dragover {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #999;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .preview-section.show {
+            display: block;
+        }
+
+        .preview-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .image-preview {
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .image-info {
+            flex: 1;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,107,107,0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff6b6b;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .url-display {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .preview-container {
+                flex-direction: column;
+            }
+            
+            .image-preview {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📤 图片上传</h1>
+            <p>上传图片并获取URL地址</p>
+        </div>
+
+        <div class="content">
+            <!-- 上传区域 -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽图片到此处</div>
+                <div class="upload-hint">支持 JPG、PNG、GIF、SVG 等格式</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <!-- 预览区域 -->
+            <div class="preview-section" id="previewSection">
+                <h3 style="margin-bottom: 20px; color: #333;">图片预览</h3>
+                <div class="preview-container">
+                    <div class="image-preview">
+                        <img id="previewImage" alt="预览图片">
+                    </div>
+                    <div class="image-info">
+                        <div class="info-item">
+                            <div class="info-label">文件名</div>
+                            <div class="info-value" id="fileName">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">文件大小</div>
+                            <div class="info-value" id="fileSize">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">图片尺寸</div>
+                            <div class="info-value" id="imageSize">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">文件类型</div>
+                            <div class="info-value" id="fileType">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配置区域 -->
+            <div class="config-section" id="configSection">
+                <h3 style="margin-bottom: 20px; color: #333;">配置信息</h3>
+                <div class="form-group">
+                    <label for="countdownSeconds">倒计时秒数</label>
+                    <input type="number" id="countdownSeconds" value="110" min="10" max="600" placeholder="请输入倒计时秒数">
+                </div>
+                
+                <button class="btn btn-primary" onclick="uploadImage()">🚀 上传并保存配置</button>
+                <button class="btn btn-secondary" onclick="copyUrl()">📋 复制URL</button>
+            </div>
+
+            <!-- URL显示区域 -->
+            <div class="url-display" id="urlDisplay" style="display: none;">
+                <strong>图片URL:</strong><br>
+                <span id="imageUrlText">-</span>
+            </div>
+
+            <!-- 状态提示 -->
+            <div class="status" id="status"></div>
+
+            <!-- 加载提示 -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>正在上传...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const configSection = document.getElementById('configSection');
+        const previewImage = document.getElementById('previewImage');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
+        const urlDisplay = document.getElementById('urlDisplay');
+        const imageUrlText = document.getElementById('imageUrlText');
+
+        // 文件信息元素
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const imageSize = document.getElementById('imageSize');
+        const fileType = document.getElementById('fileType');
+        const countdownSeconds = document.getElementById('countdownSeconds');
+
+        let currentFile = null;
+        let uploadedUrl = null;
+
+        // 点击上传区域触发文件选择
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 拖拽功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // 文件选择处理
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 处理文件
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showStatus('请选择图片文件', 'error');
+                return;
+            }
+
+            currentFile = file;
+            
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewSection.classList.add('show');
+                configSection.style.display = 'block';
+                
+                // 更新文件信息
+                updateFileInfo(file);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 更新文件信息
+        function updateFileInfo(file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = file.type;
+
+            // 获取图片尺寸
+            const img = new Image();
+            img.onload = function() {
+                imageSize.textContent = `${this.width} × ${this.height} 像素`;
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        // 上传图片
+        function uploadImage() {
+            if (!currentFile) {
+                showStatus('请先选择图片', 'error');
+                return;
+            }
+
+            const countdown = countdownSeconds.value.trim();
+            if (!countdown || countdown < 10 || countdown > 600) {
+                showStatus('倒计时秒数必须在10-600秒之间', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            // 模拟上传过程
+            setTimeout(() => {
+                // 生成模拟URL（实际项目中这里会上传到服务器）
+                const timestamp = Date.now();
+                const randomId = Math.random().toString(36).substring(7);
+                uploadedUrl = `https://example.com/uploads/${timestamp}_${randomId}.jpg`;
+                
+                // 保存配置到localStorage
+                localStorage.setItem('imageUrl', uploadedUrl);
+                localStorage.setItem('countdownSeconds', countdown);
+                localStorage.setItem('configSaveTime', Date.now().toString());
+
+                // 显示URL
+                imageUrlText.textContent = uploadedUrl;
+                urlDisplay.style.display = 'block';
+
+                showLoading(false);
+                showStatus('图片上传成功，配置已保存', 'success');
+            }, 2000);
+        }
+
+        // 复制URL
+        function copyUrl() {
+            if (!uploadedUrl) {
+                showStatus('请先上传图片', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(uploadedUrl).then(() => {
+                showStatus('URL已复制到剪贴板', 'success');
+            }).catch(() => {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = uploadedUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus('URL已复制到剪贴板', 'success');
+            });
+        }
+
+        // 显示状态
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
