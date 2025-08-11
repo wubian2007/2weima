@@ -4,7 +4,7 @@
 # 使用方法: ./sync-to-server.sh
 
 # 配置信息
-SERVER_HOST="your-server-ip"  # 替换为您的服务器IP
+SERVER_HOST="119.28.19.237"  # 替换为您的服务器IP
 SERVER_USER="root"            # 替换为您的服务器用户名
 SERVER_PATH="/www/wwwroot/2weima"  # 替换为您的网站目录
 GIT_REPO="https://github.com/wubian2007/2weima.git"
