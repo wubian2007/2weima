@@ -60,7 +60,7 @@ echo ""
 # 检查SSH连接
 check_ssh() {
     echo -e "${YELLOW}🔍 检查SSH连接...${NC}"
-    if ssh -o ConnectTimeout=10 -o BatchMode=yes $SERVER_USER@$SERVER_HOST exit 2>/dev/null; then
+    if ssh -o ConnectTimeout=10 $SERVER_USER@$SERVER_HOST "echo 'SSH连接测试成功'" 2>/dev/null; then
         echo -e "${GREEN}✅ SSH连接正常${NC}"
         return 0
     else
