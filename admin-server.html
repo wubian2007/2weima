@@ -754,7 +754,7 @@
                         <div class="config-grid">
                             <div class="config-item">
                                 <label for="serverUrl">服务器地址</label>
-                                <input type="text" id="serverUrl" placeholder="https://9gtu.com" value="https://9gtu.com">
+                                <input type="text" id="serverUrl" placeholder="https://abc123.2wei.top" value="https://abc123.2wei.top">
                             </div>
                             <div class="config-item">
                                 <label for="imageName">图片名称（可选）</label>
@@ -1028,7 +1028,14 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    const imageUrl = `${serverUrl}${result.imageUrl}`;
+                    
+                    // 自动使用当前域名，避免跨域问题
+                    const currentDomain = window.location.origin;
+                    const imageUrl = `${currentDomain}${result.imageUrl}`;
+                    
+                    console.log('生成的图片地址:', imageUrl);
+                    console.log('当前域名:', currentDomain);
+                    console.log('服务器返回路径:', result.imageUrl);
                     
                     // 保存图片URL到localStorage
                     localStorage.setItem('imageUrl', imageUrl);
@@ -1304,11 +1311,18 @@
 
         // 更新图片地址
         function updateImageUrl() {
-            const imageUrl = document.getElementById('imageUrl').value.trim();
+            let imageUrl = document.getElementById('imageUrl').value.trim();
             
             if (!imageUrl) {
                 showStatus('请输入图片URL地址！', 'error');
                 return;
+            }
+
+            // 如果是相对路径，自动添加当前域名
+            if (imageUrl.startsWith('/')) {
+                const currentDomain = window.location.origin;
+                imageUrl = `${currentDomain}${imageUrl}`;
+                console.log('自动补全域名后的图片地址:', imageUrl);
             }
 
             // 保存图片URL到localStorage
@@ -1334,18 +1348,29 @@
 
         // 测试图片地址
         function testImageUrl() {
-            const imageUrl = document.getElementById('imageUrl').value.trim();
+            let imageUrl = document.getElementById('imageUrl').value.trim();
             
             if (!imageUrl) {
                 showStatus('请先输入图片URL地址！', 'error');
                 return;
             }
 
+            // 如果是相对路径，自动添加当前域名
+            if (imageUrl.startsWith('/')) {
+                const currentDomain = window.location.origin;
+                imageUrl = `${currentDomain}${imageUrl}`;
+                console.log('测试时自动补全域名:', imageUrl);
+            }
+
+            console.log('测试图片地址:', imageUrl);
+
             const testImg = new Image();
             testImg.onload = function() {
+                console.log('图片测试成功:', this.src);
                 showStatus('图片地址测试成功，可以正常访问！', 'success');
             };
             testImg.onerror = function() {
+                console.log('图片测试失败:', this.src);
                 showStatus('图片地址测试失败，无法访问图片！', 'error');
             };
             testImg.src = imageUrl;
