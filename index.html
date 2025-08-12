@@ -252,6 +252,13 @@
         }
       }
       
+      // 调试信息：显示所有可能的图片地址
+      console.log('=== 图片地址调试信息 ===');
+      console.log('URL参数中的图片地址:', urlParams.get('imageUrl'));
+      console.log('localStorage中的图片地址:', localStorage.getItem('imageUrl'));
+      console.log('配置的固定图片地址:', IMAGE_CONFIG.imageUrl);
+      console.log('最终选择的图片地址:', imageUrl);
+      
       if (imageUrl && imageUrl.trim()) {
         console.log('设置图片地址:', imageUrl.trim());
         

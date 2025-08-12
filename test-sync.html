@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片同步测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-image {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>图片同步测试页面</h1>
+        
+        <div class="test-section">
+            <h3>当前图片显示</h3>
+            <img id="testImage" class="test-image" alt="测试图片" src="">
+            <div id="imageStatus" class="status info">等待加载...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>同步状态</h3>
+            <div id="syncStatus" class="status info">同步服务状态: 检查中...</div>
+            <button class="btn" onclick="checkSyncStatus()">检查同步状态</button>
+            <button class="btn" onclick="forceRefresh()">强制刷新图片</button>
+            <button class="btn" onclick="clearLog()">清除日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>localStorage状态</h3>
+            <div id="localStorageStatus">检查中...</div>
+            <button class="btn" onclick="checkLocalStorage()">检查localStorage</button>
+            <button class="btn" onclick="setTestImage()">设置测试图片</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>调试日志</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <!-- 引入图片同步服务 -->
+    <script src="image-sync-service.js"></script>
+    
+    <script>
+        let logElement = document.getElementById('log');
+        let testImage = document.getElementById('testImage');
+        let imageStatus = document.getElementById('imageStatus');
+        let syncStatus = document.getElementById('syncStatus');
+        let localStorageStatus = document.getElementById('localStorageStatus');
+        
+        // 日志函数
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            logElement.innerHTML = '';
+        }
+        
+        // 检查同步状态
+        function checkSyncStatus() {
+            log('=== 检查同步状态 ===');
+            
+            if (window.imageSyncService) {
+                log('图片同步服务已加载');
+                log(`同步服务状态: ${window.imageSyncService.syncEnabled ? '启用' : '禁用'}`);
+                log(`检查间隔: ${window.imageSyncService.syncIntervalMs}ms`);
+                log(`上次图片地址: ${window.imageSyncService.lastImageUrl || '无'}`);
+                
+                syncStatus.innerHTML = `同步服务状态: 已加载 (间隔: ${window.imageSyncService.syncIntervalMs}ms)`;
+                syncStatus.className = 'status success';
+                
+                // 手动触发检查
+                window.imageSyncService.checkForUpdates();
+            } else {
+                log('图片同步服务未加载');
+                syncStatus.innerHTML = '同步服务状态: 未加载';
+                syncStatus.className = 'status error';
+            }
+        }
+        
+        // 检查localStorage
+        function checkLocalStorage() {
+            log('=== 检查localStorage ===');
+            
+            const imageUrl = localStorage.getItem('imageUrl');
+            const configSaveTime = localStorage.getItem('configSaveTime');
+            
+            log(`localStorage中的imageUrl: ${imageUrl || '无'}`);
+            log(`localStorage中的configSaveTime: ${configSaveTime || '无'}`);
+            
+            if (imageUrl) {
+                localStorageStatus.innerHTML = `
+                    <strong>图片地址:</strong> ${imageUrl}<br>
+                    <strong>保存时间:</strong> ${configSaveTime ? new Date(parseInt(configSaveTime)).toLocaleString() : '未知'}
+                `;
+                localStorageStatus.className = 'status success';
+            } else {
+                localStorageStatus.innerHTML = 'localStorage中没有图片地址';
+                localStorageStatus.className = 'status error';
+            }
+        }
+        
+        // 设置测试图片
+        function setTestImage() {
+            log('=== 设置测试图片 ===');
+            
+            const testUrl = 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=' + Date.now() + '&orig=1';
+            
+            localStorage.setItem('imageUrl', testUrl);
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            log(`已设置测试图片地址: ${testUrl}`);
+            
+            // 更新显示
+            updateImageDisplay();
+            checkLocalStorage();
+        }
+        
+        // 强制刷新图片
+        function forceRefresh() {
+            log('=== 强制刷新图片 ===');
+            updateImageDisplay();
+        }
+        
+        // 更新图片显示
+        function updateImageDisplay() {
+            const imageUrl = localStorage.getItem('imageUrl');
+            
+            if (imageUrl) {
+                log(`更新图片显示: ${imageUrl}`);
+                testImage.src = imageUrl + '?t=' + Date.now();
+                imageStatus.innerHTML = '图片加载中...';
+                imageStatus.className = 'status info';
+            } else {
+                log('没有图片地址，显示默认图片');
+                testImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect fill="#f0f0f0" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="16">暂无图片</text></svg>');
+                imageStatus.innerHTML = '没有配置图片地址';
+                imageStatus.className = 'status error';
+            }
+        }
+        
+        // 图片加载事件
+        testImage.onload = function() {
+            log('图片加载成功');
+            imageStatus.innerHTML = '图片加载成功';
+            imageStatus.className = 'status success';
+        };
+        
+        testImage.onerror = function() {
+            log('图片加载失败');
+            imageStatus.innerHTML = '图片加载失败';
+            imageStatus.className = 'status error';
+        };
+        
+        // 监听图片更新事件
+        window.addEventListener('imageUrlUpdated', (e) => {
+            log(`收到图片更新事件: ${e.detail.imageUrl}`);
+            updateImageDisplay();
+        });
+        
+        // 监听storage事件
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'imageUrl') {
+                log(`收到storage事件: ${e.newValue}`);
+                updateImageDisplay();
+            }
+        });
+        
+        // 页面加载完成
+        window.onload = function() {
+            log('页面加载完成');
+            checkSyncStatus();
+            checkLocalStorage();
+            updateImageDisplay();
+        };
+    </script>
+</body>
+</html>

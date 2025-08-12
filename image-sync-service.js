@@ -47,8 +47,13 @@ class ImageSyncService {
     // 检查更新
     async checkForUpdates() {
         try {
+            console.log('=== 图片同步服务检查更新 ===');
+            
             // 方法1: 检查localStorage（同域名）
             const localImageUrl = localStorage.getItem('imageUrl');
+            console.log('localStorage中的图片地址:', localImageUrl);
+            console.log('上次记录的图片地址:', this.lastImageUrl);
+            
             if (localImageUrl && localImageUrl !== this.lastImageUrl) {
                 console.log('检测到localStorage图片地址更新:', localImageUrl);
                 this.lastImageUrl = localImageUrl;
@@ -58,6 +63,8 @@ class ImageSyncService {
             
             // 方法2: 检查服务器API（跨域名）
             const serverImageUrl = await this.getServerImageUrl();
+            console.log('服务器API返回的图片地址:', serverImageUrl);
+            
             if (serverImageUrl && serverImageUrl !== this.lastImageUrl) {
                 console.log('检测到服务器图片地址更新:', serverImageUrl);
                 this.lastImageUrl = serverImageUrl;
@@ -65,6 +72,8 @@ class ImageSyncService {
                 this.notifyUpdate(serverImageUrl, 'server');
                 return;
             }
+            
+            console.log('没有检测到图片地址更新');
             
         } catch (error) {
             console.error('检查图片更新时出错:', error);
