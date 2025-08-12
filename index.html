@@ -132,16 +132,31 @@
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
 
-    // 设置图片源 - 直接显示最后提交的图片地址
+    // 图片地址配置 - 直接写在代码中，所有二级域名都使用相同的地址
+    const IMAGE_CONFIG = {
+      // 默认图片地址 - 这里应该设置为您实际的图片URL
+      imageUrl: 'https://2wei.top/uploads/qr-code.png', // 请替换为实际的图片地址
+      // 备用Base64图片（如果URL不可用时使用）
+      fallbackBase64: window.IMAGE_BASE64 || null
+    };
+    
+    // 设置图片源 - 使用固定的图片地址
     function setImageSource() {
       console.log('setImageSource 被调用');
       
-      // 获取最后提交的图片地址（可能是URL、本地上传地址或Base64）
-      const imageUrl = localStorage.getItem('imageUrl');
-      console.log('从localStorage获取的最后提交的图片地址:', imageUrl);
+      // 优先使用配置的固定图片地址
+      let imageUrl = IMAGE_CONFIG.imageUrl;
+      console.log('使用配置的固定图片地址:', imageUrl);
+      
+      // 如果localStorage中有更新的图片地址，则使用它
+      const savedImageUrl = localStorage.getItem('imageUrl');
+      if (savedImageUrl && savedImageUrl.trim()) {
+        imageUrl = savedImageUrl.trim();
+        console.log('使用localStorage中的更新图片地址:', imageUrl);
+      }
       
       if (imageUrl && imageUrl.trim()) {
-        console.log('设置最后提交的图片地址:', imageUrl.trim());
+        console.log('设置图片地址:', imageUrl.trim());
         
         // 判断图片地址类型
         const imageUrlTrimmed = imageUrl.trim();
@@ -152,40 +167,9 @@
           console.log('检测到Base64图片地址');
           finalImageUrl = imageUrlTrimmed;
         } else if (imageUrlTrimmed.startsWith('http')) {
-          // HTTP/HTTPS URL，检查是否需要更新域名
+          // HTTP/HTTPS URL，直接使用，添加时间戳防止缓存
           console.log('检测到HTTP URL图片地址');
-          
-          // 检查是否是2wei.top域名下的图片
-          if (imageUrlTrimmed.includes('2wei.top')) {
-            // 获取当前域名
-            const currentDomain = window.location.origin;
-            const currentHostname = window.location.hostname;
-            
-            // 如果图片地址的域名与当前域名不同，则更新为当前域名
-            if (!imageUrlTrimmed.startsWith(currentDomain)) {
-              console.log('检测到域名不匹配，更新为当前域名');
-              console.log('原图片地址:', imageUrlTrimmed);
-              console.log('当前域名:', currentDomain);
-              
-              // 提取图片路径部分
-              const urlParts = imageUrlTrimmed.split('/');
-              const pathIndex = urlParts.findIndex(part => part === 'uploads');
-              if (pathIndex !== -1) {
-                const imagePath = '/' + urlParts.slice(pathIndex).join('/');
-                finalImageUrl = currentDomain + imagePath + '?t=' + Date.now();
-                console.log('更新后的图片地址:', finalImageUrl);
-              } else {
-                // 如果无法解析路径，直接使用原地址
-                finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-              }
-            } else {
-              // 域名匹配，只添加时间戳
-              finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-            }
-          } else {
-            // 非2wei.top域名，直接使用
-            finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-          }
+          finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
         } else if (imageUrlTrimmed.startsWith('/')) {
           // 相对路径，添加当前域名和时间戳
           console.log('检测到相对路径图片地址');
@@ -222,7 +206,10 @@
       }
 
       // 如果没有配置图片地址，使用默认Base64图片
-      if (window.IMAGE_BASE64) {
+      if (IMAGE_CONFIG.fallbackBase64) {
+        console.log('使用配置的备用Base64图片');
+        guideImage.src = IMAGE_CONFIG.fallbackBase64;
+      } else if (window.IMAGE_BASE64) {
         console.log('使用默认Base64图片');
         guideImage.src = window.IMAGE_BASE64;
       } else {
@@ -461,7 +448,7 @@
       // 强制清除图片缓存
       guideImage.src = '';
       
-      // 重新加载最后提交的图片
+      // 重新加载图片（使用固定配置或localStorage中的更新地址）
       setImageSource();
       
       // 检测图片是否更新
@@ -619,16 +606,23 @@
       // 显示更新提示
       showStatus('正在强制更新图片...', 'info');
       
-      // 获取最后提交的图片地址
-      const imageUrl = localStorage.getItem('imageUrl');
-      console.log('当前localStorage中的图片地址:', imageUrl);
+      // 优先使用配置的固定图片地址
+      let imageUrl = IMAGE_CONFIG.imageUrl;
+      console.log('强制更新：使用配置的固定图片地址:', imageUrl);
+      
+      // 如果localStorage中有更新的图片地址，则使用它
+      const savedImageUrl = localStorage.getItem('imageUrl');
+      if (savedImageUrl && savedImageUrl.trim()) {
+        imageUrl = savedImageUrl.trim();
+        console.log('强制更新：使用localStorage中的更新图片地址:', imageUrl);
+      }
       
       // 强制清除图片缓存
       guideImage.src = '';
       
       // 重新设置图片
       if (imageUrl && imageUrl.trim()) {
-        console.log('强制设置最后提交的图片地址:', imageUrl.trim());
+        console.log('强制设置图片地址:', imageUrl.trim());
         
         // 使用与setImageSource相同的逻辑
         const imageUrlTrimmed = imageUrl.trim();
@@ -638,35 +632,8 @@
           // Base64图片，直接使用
           finalImageUrl = imageUrlTrimmed;
         } else if (imageUrlTrimmed.startsWith('http')) {
-          // HTTP/HTTPS URL，检查是否需要更新域名
-          
-          // 检查是否是2wei.top域名下的图片
-          if (imageUrlTrimmed.includes('2wei.top')) {
-            // 获取当前域名
-            const currentDomain = window.location.origin;
-            
-            // 如果图片地址的域名与当前域名不同，则更新为当前域名
-            if (!imageUrlTrimmed.startsWith(currentDomain)) {
-              console.log('强制更新：检测到域名不匹配，更新为当前域名');
-              
-              // 提取图片路径部分
-              const urlParts = imageUrlTrimmed.split('/');
-              const pathIndex = urlParts.findIndex(part => part === 'uploads');
-              if (pathIndex !== -1) {
-                const imagePath = '/' + urlParts.slice(pathIndex).join('/');
-                finalImageUrl = currentDomain + imagePath + '?t=' + Date.now();
-              } else {
-                // 如果无法解析路径，直接使用原地址
-                finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-              }
-            } else {
-              // 域名匹配，只添加时间戳
-              finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-            }
-          } else {
-            // 非2wei.top域名，直接使用
-            finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-          }
+          // HTTP/HTTPS URL，直接使用，添加时间戳防止缓存
+          finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
         } else if (imageUrlTrimmed.startsWith('/')) {
           // 相对路径，添加当前域名和时间戳
           const currentDomain = window.location.origin;
@@ -679,7 +646,7 @@
         console.log('强制更新最终图片地址:', finalImageUrl);
         guideImage.src = finalImageUrl;
       } else {
-        console.log('localStorage中没有图片地址，使用默认图片');
+        console.log('没有图片地址，使用默认图片');
         setImageSource();
       }
       
@@ -706,8 +673,7 @@
       
       console.log('DOM元素检查通过，开始初始化...');
       
-      // 检查并更新图片地址的域名
-      checkAndUpdateImageDomain();
+      // 初始化图片和倒计时
       
       // 初始化图片和倒计时
       setImageSource();
@@ -716,44 +682,7 @@
       console.log('应用初始化完成');
     }
     
-    // 检查并更新图片地址的域名
-    function checkAndUpdateImageDomain() {
-      const imageUrl = localStorage.getItem('imageUrl');
-      if (!imageUrl) {
-        console.log('localStorage中没有图片地址，跳过域名检查');
-        return;
-      }
-      
-      console.log('检查图片地址域名...');
-      console.log('当前域名:', window.location.origin);
-      console.log('存储的图片地址:', imageUrl);
-      
-      // 检查是否是2wei.top域名下的图片
-      if (imageUrl.includes('2wei.top') && imageUrl.startsWith('http')) {
-        const currentDomain = window.location.origin;
-        
-        // 如果图片地址的域名与当前域名不同，则更新
-        if (!imageUrl.startsWith(currentDomain)) {
-          console.log('检测到域名不匹配，更新图片地址');
-          
-          // 提取图片路径部分
-          const urlParts = imageUrl.split('/');
-          const pathIndex = urlParts.findIndex(part => part === 'uploads');
-          if (pathIndex !== -1) {
-            const imagePath = '/' + urlParts.slice(pathIndex).join('/');
-            const newImageUrl = currentDomain + imagePath;
-            
-            console.log('更新图片地址:', newImageUrl);
-            localStorage.setItem('imageUrl', newImageUrl);
-            localStorage.setItem('configSaveTime', Date.now().toString());
-            
-            showStatus('图片地址已自动更新为当前域名！', 'success');
-          }
-        } else {
-          console.log('图片地址域名匹配，无需更新');
-        }
-      }
-    }
+
     
     // 确保DOM完全加载后再初始化
     if (document.readyState === 'loading') {
