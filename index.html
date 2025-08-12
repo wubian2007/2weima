@@ -3,20 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>收款中心引导 - 手机端</title>
+  <title>快捷支付 - 手机端</title>
   <style>
     :root{--bg:#0b0b0b;--btn-height:58px;--accent:#ff6b00}
     html,body{height:100%;margin:0;font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft Yahei", Arial; background:var(--bg); color:#fff}
     .page{min-height:100vh;display:flex;flex-direction:column}
 
-    /* 顶部区域 - 图片容器（等比最大化，保持在可视区） */
-    .hero{flex:1;display:flex;align-items:center;justify-content:center;padding:18px}
-    .frame{width:100%;max-width:720px;height:100%;max-height:calc(100vh - 120px);background:#111;border-radius:12px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
-    .guide-img{width:100%;height:100%;object-fit:cover;display:block}
+    /* 顶部信息栏 */
+    .header{background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:20px;text-align:center;color:#fff}
+    .header-title{font-size:24px;font-weight:bold;margin-bottom:10px}
+    .header-info{display:flex;justify-content:space-around;align-items:center;font-size:14px}
+    .info-item{display:flex;flex-direction:column;align-items:center}
+    .info-label{opacity:0.8;margin-bottom:4px}
+    .info-value{font-weight:600}
 
-    /* 倒计时器 */
-    .countdown{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;padding:6px 12px;border-radius:20px;font-size:14px;font-weight:600;z-index:100}
+    /* 图片区域 - 移除边框，全屏显示 */
+    .hero{flex:1;display:flex;align-items:center;justify-content:center;padding:0;position:relative}
+    .guide-img{width:100%;height:100%;object-fit:contain;display:block}
+
+    /* 倒计时器 - 移到图片上方 */
+    .countdown{position:absolute;top:20px;right:20px;background:rgba(255,0,0,0.8);color:#fff;padding:8px 16px;border-radius:20px;font-size:16px;font-weight:600;z-index:100}
     .countdown.expired{background:rgba(255,0,0,0.6);color:#ffcccc}
+
+    /* 扫码支付提示 - 移到图片上方 */
+    .hint{position:absolute;left:20px;top:20px;background:rgba(0,0,0,0.7);color:#fff;padding:8px 16px;border-radius:20px;font-size:16px;font-weight:600;z-index:100}
 
     /* 过期提示 */
     .expired-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:50}
@@ -30,32 +40,42 @@
     .btn{flex:1;max-width:360px;height:var(--btn-height);border-radius:10px;border:0;font-size:18px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
     .btn.primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(255,107,0,0.18)}
     .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.08)}
-
-    /* 小提示 */
-    .hint{position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.45);padding:6px 10px;border-radius:8px;font-size:13px}
   </style>
 </head>
 <body>
   <div class="page">
-    <main class="hero">
-      <div class="frame" id="frame">
-        <!-- 倒计时器 -->
-        <div class="countdown" id="countdown">
-          <span id="countdownText">110s</span>
+    <!-- 顶部信息栏 -->
+    <header class="header">
+      <div class="header-title">快捷支付</div>
+      <div class="header-info">
+        <div class="info-item">
+          <div class="info-label">支付金额</div>
+          <div class="info-value" id="paymentAmount">100-2000</div>
         </div>
+        <div class="info-item">
+          <div class="info-label">有效期</div>
+          <div class="info-value" id="validityPeriod">100秒</div>
+        </div>
+      </div>
+    </header>
 
-        <!-- 提示文本 -->
-        <div class="hint">扫码支付</div>
+    <main class="hero">
+      <!-- 倒计时器 -->
+      <div class="countdown" id="countdown">
+        <span id="countdownText">100s</span>
+      </div>
 
-        <!-- 图片，使用base64数据或后台配置的地址 -->
-        <img id="guideImage" class="guide-img" src="" alt="收款引导图" />
+      <!-- 扫码支付提示 -->
+      <div class="hint" id="scanHint">扫码支付</div>
 
-        <!-- 过期提示覆盖层 -->
-        <div class="expired-overlay" id="expiredOverlay">
-          <div class="expired-content">
-            <div class="expired-title">二维码已过期</div>
-            <div class="expired-desc">点击刷新</div>
-          </div>
+      <!-- 图片，使用base64数据或后台配置的地址 -->
+      <img id="guideImage" class="guide-img" src="" alt="收款引导图" />
+
+      <!-- 过期提示覆盖层 -->
+      <div class="expired-overlay" id="expiredOverlay">
+        <div class="expired-content">
+          <div class="expired-title">二维码已过期</div>
+          <div class="expired-desc">点击刷新</div>
         </div>
       </div>
     </main>
@@ -74,8 +94,36 @@
   <script src="auto-redirect-manager.js"></script>
 
   <script>
-    // 配置
-    const COUNTDOWN_SECONDS = 110; // 倒计时秒数
+    // 配置 - 从localStorage加载或使用默认值
+    const DEFAULT_CONFIG = {
+      countdownSeconds: 100,
+      paymentAmount: '100-2000',
+      validityPeriod: '100秒',
+      scanHint: '扫码支付'
+    };
+    
+    // 加载配置
+    function loadConfig() {
+      const config = {};
+      Object.keys(DEFAULT_CONFIG).forEach(key => {
+        const saved = localStorage.getItem(key);
+        config[key] = saved !== null ? saved : DEFAULT_CONFIG[key];
+      });
+      return config;
+    }
+    
+    // 应用配置到界面
+    function applyConfig(config) {
+      document.getElementById('paymentAmount').textContent = config.paymentAmount;
+      document.getElementById('validityPeriod').textContent = config.validityPeriod;
+      document.getElementById('scanHint').textContent = config.scanHint;
+      return config.countdownSeconds;
+    }
+    
+    const config = loadConfig();
+    const COUNTDOWN_SECONDS = applyConfig(config);
+    
+    // DOM元素
     const guideImage = document.getElementById('guideImage');
     const reloadBtn = document.getElementById('reloadBtn');
     const payBtn = document.getElementById('payBtn');
@@ -100,6 +148,129 @@
         guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">图片加载失败，点击刷新二维码</text></svg>');
       }
     }
+    
+    // 长按图片功能
+    let longPressTimer = null;
+    let isLongPressed = false;
+    
+    function startLongPress() {
+      if (longPressTimer) return;
+      
+      longPressTimer = setTimeout(() => {
+        isLongPressed = true;
+        showLongPressMenu();
+      }, 3000); // 3秒长按
+    }
+    
+    function cancelLongPress() {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      isLongPressed = false;
+    }
+    
+    function showLongPressMenu() {
+      // 创建微信风格的长按菜单
+      const menu = document.createElement('div');
+      menu.id = 'longPressMenu';
+      menu.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <div style="
+            background: #333;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 300px;
+            width: 90%;
+          ">
+            <div style="
+              color: #fff;
+              text-align: center;
+              font-size: 18px;
+              margin-bottom: 20px;
+            ">选择操作</div>
+            <div style="
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            ">
+              <button onclick="saveImage()" style="
+                background: #007aff;
+                color: #fff;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 16px;
+              ">保存图片</button>
+              <button onclick="copyImageUrl()" style="
+                background: #007aff;
+                color: #fff;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 16px;
+              ">复制图片链接</button>
+              <button onclick="closeLongPressMenu()" style="
+                background: #666;
+                color: #fff;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 16px;
+              ">取消</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(menu);
+    }
+    
+    function closeLongPressMenu() {
+      const menu = document.getElementById('longPressMenu');
+      if (menu) {
+        menu.remove();
+      }
+      cancelLongPress();
+    }
+    
+    function saveImage() {
+      // 创建下载链接
+      const link = document.createElement('a');
+      link.href = guideImage.src;
+      link.download = 'payment-qr.png';
+      link.click();
+      closeLongPressMenu();
+    }
+    
+    function copyImageUrl() {
+      // 复制图片URL到剪贴板
+      navigator.clipboard.writeText(guideImage.src).then(() => {
+        alert('图片链接已复制到剪贴板');
+      }).catch(() => {
+        alert('复制失败，请手动复制');
+      });
+      closeLongPressMenu();
+    }
+    
+    // 绑定长按事件
+    guideImage.addEventListener('mousedown', startLongPress);
+    guideImage.addEventListener('mouseup', cancelLongPress);
+    guideImage.addEventListener('mouseleave', cancelLongPress);
+    guideImage.addEventListener('touchstart', startLongPress);
+    guideImage.addEventListener('touchend', cancelLongPress);
+    guideImage.addEventListener('touchcancel', cancelLongPress);
 
     // 倒计时相关变量
     let countdownTimer = null;
@@ -184,7 +355,7 @@
       }
     }
 
-    // 刷新二维码功能
+    // 刷新二维码功能 - 带图片更新检测
     function refreshQRCode() {
       // 清除过期状态
       isExpired = false;
@@ -195,28 +366,39 @@
       payBtn.disabled = false;
       payBtn.style.opacity = '1';
       
-      // 重新加载图片
-      setImageSource();
-      
-      // 重新初始化倒计时
-      initCountdown();
+      // 保存当前图片URL用于比较
+      const currentImageUrl = guideImage.src;
       
       // 显示刷新提示
       showStatus('正在刷新二维码...', 'info');
+      
+      // 重新加载图片
+      setImageSource();
+      
+      // 检测图片是否更新
+      setTimeout(() => {
+        const newImageUrl = guideImage.src;
+        if (newImageUrl === currentImageUrl) {
+          showStatus('二维码未更新，请稍后再试', 'warning');
+        } else {
+          showStatus('二维码已更新！', 'success');
+        }
+      }, 1000);
+      
+      // 重新初始化倒计时
+      initCountdown();
     }
 
-    // 支付按钮点击事件
+    // 支付按钮点击事件 - 自动执行长按操作
     function handlePayClick() {
       if (isExpired) {
         alert('二维码已过期，请刷新二维码');
         return;
       }
       
-      // 这里可以添加支付逻辑，比如跳转到支付页面或显示支付提示
-      alert('正在跳转到支付页面...');
-      
-      // 示例：可以在这里添加实际的支付跳转逻辑
-      // window.location.href = '支付页面URL';
+      // 自动执行长按操作
+      console.log('立即支付按钮被点击，执行长按操作...');
+      startLongPress();
     }
 
     // 绑定事件
@@ -225,7 +407,71 @@
 
     // 显示状态提示
     function showStatus(message, type) {
-      // 简单的状态提示
+      // 创建状态提示元素
+      const statusDiv = document.createElement('div');
+      statusDiv.id = 'statusMessage';
+      
+      // 根据类型设置样式
+      let bgColor = '#333';
+      let textColor = '#fff';
+      
+      switch(type) {
+        case 'success':
+          bgColor = '#28a745';
+          break;
+        case 'error':
+          bgColor = '#dc3545';
+          break;
+        case 'warning':
+          bgColor = '#ffc107';
+          textColor = '#333';
+          break;
+        case 'info':
+          bgColor = '#17a2b8';
+          break;
+      }
+      
+      statusDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 2000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+      `;
+      
+      statusDiv.textContent = message;
+      
+      // 移除已存在的状态提示
+      const existingStatus = document.getElementById('statusMessage');
+      if (existingStatus) {
+        existingStatus.remove();
+      }
+      
+      // 添加到页面
+      document.body.appendChild(statusDiv);
+      
+      // 3秒后自动移除
+      setTimeout(() => {
+        if (statusDiv.parentNode) {
+          statusDiv.style.opacity = '0';
+          statusDiv.style.transform = 'translateX(-50%) translateY(-20px)';
+          setTimeout(() => {
+            if (statusDiv.parentNode) {
+              statusDiv.remove();
+            }
+          }, 300);
+        }
+      }, 3000);
+      
+      // 同时输出到控制台
       console.log(`${type}: ${message}`);
     }
 

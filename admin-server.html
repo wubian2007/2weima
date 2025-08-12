@@ -631,6 +631,42 @@
                 <p>✅ 支持多种图片格式</p>
             </div>
 
+            <!-- 页面配置管理区域 -->
+            <div class="section">
+                <h2>页面配置管理</h2>
+                <div class="config-management">
+                    <div class="config-section">
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label for="pageTitle">页面标题:</label>
+                                <input type="text" id="pageTitle" placeholder="快捷支付" value="快捷支付">
+                            </div>
+                            <div class="config-item">
+                                <label for="paymentAmount">支付金额:</label>
+                                <input type="text" id="paymentAmount" placeholder="100-2000" value="100-2000">
+                            </div>
+                            <div class="config-item">
+                                <label for="validityPeriod">有效期:</label>
+                                <input type="text" id="validityPeriod" placeholder="100秒" value="100秒">
+                            </div>
+                            <div class="config-item">
+                                <label for="scanHint">扫码提示:</label>
+                                <input type="text" id="scanHint" placeholder="扫码支付" value="扫码支付">
+                            </div>
+                            <div class="config-item">
+                                <label for="countdownSeconds">倒计时秒数:</label>
+                                <input type="number" id="countdownSeconds" placeholder="100" value="100" min="10" max="3600">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" onclick="savePageConfig()">💾 保存配置</button>
+                            <button class="btn btn-secondary" onclick="resetPageConfig()">🔄 重置配置</button>
+                            <button class="btn btn-info" onclick="previewPageConfig()">👁️ 预览效果</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 图片更新模式选择 -->
             <div class="section">
                 <h2>图片更新模式</h2>
@@ -1509,6 +1545,120 @@
             }
         }
         
+        // 页面配置管理函数
+        function loadPageConfig() {
+            const config = {
+                pageTitle: localStorage.getItem('pageTitle') || '快捷支付',
+                paymentAmount: localStorage.getItem('paymentAmount') || '100-2000',
+                validityPeriod: localStorage.getItem('validityPeriod') || '100秒',
+                scanHint: localStorage.getItem('scanHint') || '扫码支付',
+                countdownSeconds: localStorage.getItem('countdownSeconds') || '100'
+            };
+            
+            document.getElementById('pageTitle').value = config.pageTitle;
+            document.getElementById('paymentAmount').value = config.paymentAmount;
+            document.getElementById('validityPeriod').value = config.validityPeriod;
+            document.getElementById('scanHint').value = config.scanHint;
+            document.getElementById('countdownSeconds').value = config.countdownSeconds;
+            
+            return config;
+        }
+        
+        function savePageConfig() {
+            const config = {
+                pageTitle: document.getElementById('pageTitle').value,
+                paymentAmount: document.getElementById('paymentAmount').value,
+                validityPeriod: document.getElementById('validityPeriod').value,
+                scanHint: document.getElementById('scanHint').value,
+                countdownSeconds: document.getElementById('countdownSeconds').value
+            };
+            
+            // 保存到localStorage
+            Object.keys(config).forEach(key => {
+                localStorage.setItem(key, config[key]);
+            });
+            
+            // 保存时间戳
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            showStatus('页面配置已保存！', 'success');
+            console.log('页面配置已保存:', config);
+        }
+        
+        function resetPageConfig() {
+            const defaultConfig = {
+                pageTitle: '快捷支付',
+                paymentAmount: '100-2000',
+                validityPeriod: '100秒',
+                scanHint: '扫码支付',
+                countdownSeconds: '100'
+            };
+            
+            document.getElementById('pageTitle').value = defaultConfig.pageTitle;
+            document.getElementById('paymentAmount').value = defaultConfig.paymentAmount;
+            document.getElementById('validityPeriod').value = defaultConfig.validityPeriod;
+            document.getElementById('scanHint').value = defaultConfig.scanHint;
+            document.getElementById('countdownSeconds').value = defaultConfig.countdownSeconds;
+            
+            showStatus('页面配置已重置为默认值！', 'info');
+        }
+        
+        function previewPageConfig() {
+            const config = {
+                pageTitle: document.getElementById('pageTitle').value,
+                paymentAmount: document.getElementById('paymentAmount').value,
+                validityPeriod: document.getElementById('validityPeriod').value,
+                scanHint: document.getElementById('scanHint').value,
+                countdownSeconds: document.getElementById('countdownSeconds').value
+            };
+            
+            // 创建预览窗口
+            const previewWindow = window.open('', '_blank', 'width=400,height=600');
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${config.pageTitle}</title>
+                    <style>
+                        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+                        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: #fff; }
+                        .header-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+                        .header-info { display: flex; justify-content: space-around; align-items: center; font-size: 14px; }
+                        .info-item { display: flex; flex-direction: column; align-items: center; }
+                        .info-label { opacity: 0.8; margin-bottom: 4px; }
+                        .info-value { font-weight: 600; }
+                        .hero { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0; position: relative; height: 400px; background: #f5f5f5; }
+                        .hint { position: absolute; left: 20px; top: 20px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 16px; font-weight: 600; }
+                        .countdown { position: absolute; top: 20px; right: 20px; background: rgba(255,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 16px; font-weight: 600; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="header-title">${config.pageTitle}</div>
+                        <div class="header-info">
+                            <div class="info-item">
+                                <div class="info-label">支付金额</div>
+                                <div class="info-value">${config.paymentAmount}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">有效期</div>
+                                <div class="info-value">${config.validityPeriod}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero">
+                        <div class="hint">${config.scanHint}</div>
+                        <div class="countdown">${config.countdownSeconds}s</div>
+                        <div style="text-align: center; color: #666;">图片预览区域</div>
+                    </div>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
+            
+            showStatus('预览窗口已打开！', 'info');
+        }
+        
         // 初始化
         checkLogin();
         updateUrlPreview();
@@ -1518,6 +1668,9 @@
         
         // 加载当前配置的图片
         loadCurrentImage();
+        
+        // 加载页面配置
+        loadPageConfig();
         
         // 更新域名状态
         setTimeout(() => {
