@@ -91,9 +91,6 @@
     </footer>
   </div>
 
-  <!-- 引入图片配置文件 -->
-  <script src="image-config.js?v=1"></script>
-
   <script>
     // 倒计时配置
     const COUNTDOWN_SECONDS = 100;
@@ -105,6 +102,17 @@
     const countdown = document.getElementById('countdown');
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
+
+    // 动态加载配置文件
+    function loadImageConfig() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `image-config.js?v=${Date.now()}`;
+        script.onload = () => resolve();
+        script.onerror = () => reject();
+        document.head.appendChild(script);
+      });
+    }
 
     // 设置图片源
     function setImageSource() {
@@ -223,8 +231,14 @@
 
 
     // 初始化
-    setImageSource();
-    initCountdown();
+    loadImageConfig().then(() => {
+      setImageSource();
+      initCountdown();
+    }).catch(() => {
+      // 如果配置文件加载失败，使用默认图片
+      setImageSource();
+      initCountdown();
+    });
   </script>
 </body>
 </html>
