@@ -492,6 +492,29 @@
         }
       }
     });
+    
+    // 监听自定义事件，实时更新图片（同一窗口内的更新）
+    window.addEventListener('imageUrlUpdated', (e) => {
+      console.log('收到图片更新事件:', e.detail);
+      setImageSource();
+      showStatus('图片已实时更新！', 'success');
+    });
+    
+    // 监听页面配置更新事件
+    window.addEventListener('pageConfigUpdated', (e) => {
+      console.log('收到页面配置更新事件:', e.detail);
+      const config = e.detail;
+      
+      // 更新页面配置
+      document.getElementById('paymentAmount').textContent = config.paymentAmount;
+      document.getElementById('validityPeriod').textContent = config.validityPeriod;
+      document.getElementById('scanHint').textContent = config.scanHint;
+      
+      // 重新初始化倒计时
+      initCountdown();
+      
+      showStatus('页面配置已实时更新！', 'success');
+    });
 
     // 初始化图片和倒计时
     setImageSource();

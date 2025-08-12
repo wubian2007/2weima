@@ -1040,6 +1040,9 @@
                     // 更新测试显示
                     updateTestDisplay('服务器上传', imageUrl);
                     
+                    // 触发自定义事件，通知其他页面更新
+                    window.dispatchEvent(new CustomEvent('imageUrlUpdated', { detail: { imageUrl } }));
+                    
                     // 显示成功信息
                     setTimeout(() => {
                         showStatus('✅ 图片已上传到服务器并更新前端显示', 'success');
@@ -1288,6 +1291,9 @@
                 // 更新测试显示
                 updateTestDisplay('Base64', base64Data);
                 
+                // 触发自定义事件，通知其他页面更新
+                window.dispatchEvent(new CustomEvent('imageUrlUpdated', { detail: { imageUrl: base64Data } }));
+                
                 // 显示成功信息
                 setTimeout(() => {
                     showStatus('✅ Base64图片已转换并更新前端显示', 'success');
@@ -1316,6 +1322,9 @@
             
             // 更新测试显示
             updateTestDisplay('URL', imageUrl);
+            
+            // 触发自定义事件，通知其他页面更新
+            window.dispatchEvent(new CustomEvent('imageUrlUpdated', { detail: { imageUrl } }));
             
             // 显示成功信息
             setTimeout(() => {
@@ -1580,6 +1589,9 @@
             
             // 保存时间戳
             localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            // 触发自定义事件，通知其他页面更新配置
+            window.dispatchEvent(new CustomEvent('pageConfigUpdated', { detail: config }));
             
             showStatus('页面配置已保存！', 'success');
             console.log('页面配置已保存:', config);
