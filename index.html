@@ -133,18 +133,37 @@
 
     // 设置图片源
     function setImageSource() {
+      console.log('setImageSource 被调用');
+      
       // 优先使用后台配置的图片地址
       const imageUrl = localStorage.getItem('imageUrl');
+      console.log('从localStorage获取的imageUrl:', imageUrl);
+      
       if (imageUrl && imageUrl.trim()) {
+        console.log('设置图片地址:', imageUrl.trim());
         guideImage.src = imageUrl.trim();
+        
+        // 添加图片加载事件监听
+        guideImage.onload = function() {
+          console.log('图片加载成功:', this.src);
+          showStatus('图片加载成功！', 'success');
+        };
+        
+        guideImage.onerror = function() {
+          console.log('图片加载失败:', this.src);
+          showStatus('图片加载失败！', 'error');
+        };
+        
         return;
       }
 
       // 如果没有配置图片地址，使用base64图片
       if (window.IMAGE_BASE64) {
+        console.log('使用Base64图片');
         guideImage.src = window.IMAGE_BASE64;
       } else {
         // 如果base64文件加载失败，使用备用图片
+        console.log('使用备用图片');
         guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">图片加载失败，点击刷新二维码</text></svg>');
       }
     }
@@ -496,6 +515,7 @@
     // 监听自定义事件，实时更新图片（同一窗口内的更新）
     window.addEventListener('imageUrlUpdated', (e) => {
       console.log('收到图片更新事件:', e.detail);
+      console.log('事件详情:', e);
       setImageSource();
       showStatus('图片已实时更新！', 'success');
     });
