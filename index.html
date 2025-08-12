@@ -83,6 +83,7 @@
     <footer class="footer">
       <button id="reloadBtn" class="btn ghost">刷新二维码</button>
       <button id="forceUpdateBtn" class="btn ghost" onclick="forceUpdateImage()">强制更新</button>
+      <button id="debugBtn" class="btn ghost" onclick="debugImageUrl()">调试地址</button>
       <button id="payBtn" class="btn primary">立即支付</button>
     </footer>
   </div>
@@ -140,19 +141,19 @@
       fallbackBase64: window.IMAGE_BASE64 || null
     };
     
-    // 设置图片源 - 使用固定的图片地址
+    // 设置图片源 - 优先使用localStorage中的更新地址
     function setImageSource() {
       console.log('setImageSource 被调用');
       
-      // 优先使用配置的固定图片地址
-      let imageUrl = IMAGE_CONFIG.imageUrl;
-      console.log('使用配置的固定图片地址:', imageUrl);
-      
-      // 如果localStorage中有更新的图片地址，则使用它
-      const savedImageUrl = localStorage.getItem('imageUrl');
-      if (savedImageUrl && savedImageUrl.trim()) {
-        imageUrl = savedImageUrl.trim();
+      // 优先使用localStorage中的更新图片地址
+      let imageUrl = localStorage.getItem('imageUrl');
+      if (imageUrl && imageUrl.trim()) {
+        imageUrl = imageUrl.trim();
         console.log('使用localStorage中的更新图片地址:', imageUrl);
+      } else {
+        // 如果没有更新地址，使用配置的固定图片地址
+        imageUrl = IMAGE_CONFIG.imageUrl;
+        console.log('使用配置的固定图片地址:', imageUrl);
       }
       
       if (imageUrl && imageUrl.trim()) {
@@ -606,15 +607,15 @@
       // 显示更新提示
       showStatus('正在强制更新图片...', 'info');
       
-      // 优先使用配置的固定图片地址
-      let imageUrl = IMAGE_CONFIG.imageUrl;
-      console.log('强制更新：使用配置的固定图片地址:', imageUrl);
-      
-      // 如果localStorage中有更新的图片地址，则使用它
-      const savedImageUrl = localStorage.getItem('imageUrl');
-      if (savedImageUrl && savedImageUrl.trim()) {
-        imageUrl = savedImageUrl.trim();
+      // 优先使用localStorage中的更新图片地址
+      let imageUrl = localStorage.getItem('imageUrl');
+      if (imageUrl && imageUrl.trim()) {
+        imageUrl = imageUrl.trim();
         console.log('强制更新：使用localStorage中的更新图片地址:', imageUrl);
+      } else {
+        // 如果没有更新地址，使用配置的固定图片地址
+        imageUrl = IMAGE_CONFIG.imageUrl;
+        console.log('强制更新：使用配置的固定图片地址:', imageUrl);
       }
       
       // 强制清除图片缓存
@@ -654,6 +655,36 @@
       setTimeout(() => {
         showStatus('图片强制更新完成！', 'success');
       }, 500);
+    }
+    
+    // 调试图片地址功能
+    function debugImageUrl() {
+      console.log('=== 调试图片地址信息 ===');
+      
+      // 检查localStorage中的图片地址
+      const savedImageUrl = localStorage.getItem('imageUrl');
+      console.log('localStorage中的图片地址:', savedImageUrl);
+      
+      // 检查配置中的图片地址
+      console.log('IMAGE_CONFIG中的图片地址:', IMAGE_CONFIG.imageUrl);
+      
+      // 检查当前图片的src
+      console.log('当前图片的src:', guideImage.src);
+      
+      // 显示调试信息
+      let debugInfo = '调试信息:\n';
+      debugInfo += `localStorage: ${savedImageUrl || '无'}\n`;
+      debugInfo += `配置地址: ${IMAGE_CONFIG.imageUrl}\n`;
+      debugInfo += `当前src: ${guideImage.src}\n`;
+      
+      alert(debugInfo);
+      
+      // 如果localStorage中有地址，强制使用它
+      if (savedImageUrl && savedImageUrl.trim()) {
+        console.log('强制使用localStorage中的地址');
+        guideImage.src = savedImageUrl.trim() + '?t=' + Date.now();
+        showStatus('已强制使用localStorage中的地址！', 'success');
+      }
     }
 
     // 等待DOM完全加载后再初始化
