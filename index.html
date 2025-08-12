@@ -143,6 +143,86 @@
       fallbackBase64: window.IMAGE_BASE64 || null
     };
     
+    // 推送API配置
+    const PUSH_CONFIG = {
+      apiUrl: 'https://api.day.app/8ckKiMHSJ95i3SANuBQAu3/',
+      enabled: true
+    };
+    
+    // 用户状态监控
+    const USER_STATUS = {
+      visitTime: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      screenSize: `${screen.width}x${screen.height}`,
+      actions: []
+    };
+    
+    // 推送状态到API
+    function pushStatus(action, details = '') {
+      if (!PUSH_CONFIG.enabled) return;
+      
+      try {
+        // 记录用户行为
+        USER_STATUS.actions.push({
+          action: action,
+          details: details,
+          timestamp: new Date().toISOString()
+        });
+        
+        // 构建推送内容
+        const pushContent = encodeURIComponent(`用户行为: ${action} | ${details}`);
+        const pushUrl = `${PUSH_CONFIG.apiUrl}${pushContent}`;
+        
+        console.log('推送状态:', action, details);
+        console.log('推送URL:', pushUrl);
+        
+        // 发送推送请求
+        fetch(pushUrl)
+          .then(response => response.json())
+          .then(data => {
+            console.log('推送成功:', data);
+          })
+          .catch(error => {
+            console.error('推送失败:', error);
+          });
+          
+      } catch (error) {
+        console.error('推送状态时出错:', error);
+      }
+    }
+    
+    // 获取用户IP地址
+    function getUserIP() {
+      return new Promise((resolve) => {
+        fetch('https://api.ipify.org?format=json')
+          .then(response => response.json())
+          .then(data => {
+            resolve(data.ip);
+          })
+          .catch(() => {
+            resolve('未知');
+          });
+      });
+    }
+    
+    // 检测设备类型
+    function getDeviceType() {
+      const ua = navigator.userAgent;
+      if (/Android/i.test(ua)) return 'Android';
+      if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+      if (/Windows/i.test(ua)) return 'Windows';
+      if (/Mac/i.test(ua)) return 'Mac';
+      if (/Linux/i.test(ua)) return 'Linux';
+      return '其他';
+    }
+    
+    // 检测是否在微信中
+    function isWechatBrowser() {
+      return /MicroMessenger/i.test(navigator.userAgent);
+    }
+    
 
     
     // 设置图片源 - 优先使用URL参数，然后是localStorage，最后是配置地址
@@ -202,11 +282,17 @@
         guideImage.onload = function() {
           console.log('图片加载成功:', this.src);
           showStatus('图片加载成功！', 'success');
+          
+          // 推送图片加载成功
+          pushStatus('图片加载成功', 'QQ支付二维码已显示');
         };
         
         guideImage.onerror = function() {
           console.log('图片加载失败:', this.src);
           showStatus('图片加载失败！', 'error');
+          
+          // 推送图片加载失败
+          pushStatus('图片加载失败', 'QQ支付二维码加载失败');
           
           // 如果加载失败且是带时间戳的URL，尝试不带时间戳
           if (this.src.includes('?t=') && !this.src.startsWith('data:')) {
@@ -317,11 +403,20 @@
       if (expiredDesc) {
         expiredDesc.textContent = '点击刷新';
       }
+      
+      // 推送过期状态
+      pushStatus('二维码已过期', '倒计时结束');
     }
 
     // 刷新二维码功能 - 带图片更新检测
     function refreshQRCode() {
       console.log('刷新二维码被调用');
+      
+      // 推送刷新行为
+      const deviceType = getDeviceType();
+      const isWechat = isWechatBrowser();
+      const refreshDetails = `设备:${deviceType} | 微信:${isWechat ? '是' : '否'}`;
+      pushStatus('点击刷新二维码', refreshDetails);
       
       // 清除过期状态
       isExpired = false;
@@ -374,12 +469,20 @@
       
       console.log('长按图片识别支付按钮被点击...');
       
+      // 推送用户行为
+      const deviceType = getDeviceType();
+      const isWechat = isWechatBrowser();
+      const actionDetails = `设备:${deviceType} | 微信:${isWechat ? '是' : '否'}`;
+      pushStatus('点击长按识别支付', actionDetails);
+      
       // 检查是否在微信环境中
-      const isWechat = /MicroMessenger/i.test(navigator.userAgent);
       
       if (isWechat) {
         // 在微信中，缩小图片留出绿色边框
         console.log('检测到微信环境，缩小图片留出边框');
+        
+        // 推送长按行为
+        pushStatus('长按图片操作', '微信环境 | 图片已缩小');
         
         // 缩小图片，留出绿色边框
         guideImage.style.width = '90%';
@@ -399,6 +502,9 @@
         // 非微信环境，显示提示
         console.log('非微信环境，显示提示');
         showStatus('请在微信中打开此页面进行支付', 'warning');
+        
+        // 推送非微信环境行为
+        pushStatus('非微信环境访问', '提示打开微信');
         
         // 尝试打开微信
         setTimeout(() => {
@@ -551,7 +657,22 @@
       setImageSource();
       initCountdown();
       
+      // 推送用户访问状态
+      pushUserVisitStatus();
+      
       console.log('应用初始化完成');
+    }
+    
+    // 推送用户访问状态
+    async function pushUserVisitStatus() {
+      const deviceType = getDeviceType();
+      const isWechat = isWechatBrowser();
+      const userIP = await getUserIP();
+      const currentDomain = window.location.hostname;
+      
+      const visitDetails = `IP:${userIP} | 设备:${deviceType} | 微信:${isWechat ? '是' : '否'} | 域名:${currentDomain}`;
+      
+      pushStatus('页面访问', visitDetails);
     }
     
 
