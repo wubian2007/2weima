@@ -82,22 +82,31 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 });
 
-// 路由：上传图片并转换为base64
-app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+// 路由：上传图片到服务器
+app.post('/api/upload-image', uploadToDisk.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: '没有上传文件' });
         }
 
         const file = req.file;
-        const base64Data = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+        const imageUrl = `/uploads/${file.filename}`;
+        
+        // 更新图片配置文件
+        const configContent = `// 图片配置文件 - 由后台自动更新
+window.CURRENT_IMAGE_URL = '${imageUrl}';
+// 更新时间: ${new Date().toISOString()}
+`;
+        
+        await fs.writeFile('image-config.js', configContent, 'utf8');
         
         res.json({
             success: true,
-            base64Data: base64Data,
+            imageUrl: imageUrl,
             fileName: file.originalname,
             fileSize: file.size,
-            mimeType: file.mimetype
+            mimeType: file.mimetype,
+            message: '图片上传成功并已更新配置文件'
         });
         
     } catch (error) {

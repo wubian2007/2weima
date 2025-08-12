@@ -504,6 +504,68 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
+        .upload-module {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .upload-area {
+            border: 3px dashed #e1e5e9;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        .upload-placeholder {
+            color: #666;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .upload-preview {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .upload-info {
+            margin: 15px 0;
+        }
+
+                .upload-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
         .test-info {
             background: #f8f9fa;
             border-radius: 10px;
@@ -688,6 +750,9 @@
         <div class="main-content" id="mainContent">
             <!-- 导航菜单 -->
             <div class="nav-menu">
+                <div class="nav-item active" onclick="switchPage('imageConfig')">
+                    <i class="fas fa-image"></i> 图片配置
+                </div>
                 <div class="nav-item" onclick="switchPage('pageConfig')">
                     <i class="fas fa-cog"></i> 页面配置
                 </div>
@@ -699,8 +764,98 @@
                 </div>
             </div>
 
-            <!-- 页面内容区域 -->
-            <div class="page-content active" id="pageConfigContent">
+            <!-- 图片更新配置页面（默认首页） -->
+            <div class="page-content active" id="imageConfigContent">
+                <h2>图片更新配置</h2>
+                
+                <!-- URL地址配置 -->
+                <div class="section">
+                    <h3>URL地址配置</h3>
+                    <div class="mode-description">
+                        <p>直接输入图片URL地址，自动更新到配置文件</p>
+                    </div>
+                    
+                    <div class="update-module">
+                        <h4>📝 图片地址配置</h4>
+                        <div class="config-section">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label for="imageUrl">图片URL地址</label>
+                                    <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+                            
+                            <div class="url-preview" id="urlPreview">
+                                当前图片地址: 未设置
+                            </div>
+                            
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="updateImageUrl()">💾 更新图片地址</button>
+                                <button class="btn btn-info" onclick="loadCurrentImageUrl()">📂 加载当前地址</button>
+                                <button class="btn btn-secondary" onclick="testConfigFile()">📄 测试配置文件</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手动上传图片 -->
+                <div class="section">
+                    <h3>手动上传图片</h3>
+                    <div class="mode-description">
+                        <p>上传本地图片文件，自动保存到服务器并更新配置文件</p>
+                    </div>
+                    
+                    <div class="upload-module">
+                        <h4>📤 图片上传</h4>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-placeholder">
+                                <div class="upload-icon">📁</div>
+                                <p>点击选择图片或拖拽图片到此处</p>
+                                <p class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</p>
+                            </div>
+                            <input type="file" id="imageFile" accept="image/*" style="display: none;">
+                        </div>
+                        
+                        <div class="upload-preview" id="uploadPreview" style="display: none;">
+                            <h5>上传预览</h5>
+                            <img id="uploadPreviewImage" src="" alt="预览图片" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                            <div class="upload-info">
+                                <p><strong>文件名:</strong> <span id="uploadFileName"></span></p>
+                                <p><strong>文件大小:</strong> <span id="uploadFileSize"></span></p>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="uploadImage()">🚀 上传并更新配置</button>
+                                <button class="btn btn-secondary" onclick="clearUpload()">❌ 取消上传</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 测试显示区域 -->
+                <div class="section">
+                    <h3>测试显示效果</h3>
+                    <div class="test-display">
+                        <div class="test-preview">
+                            <h4>配置文件中的图片效果</h4>
+                            <div class="image-container">
+                                <img id="testImage" src="" alt="测试图片" style="max-width: 100%; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            </div>
+                            <div class="test-info">
+                                <p><strong>配置文件地址:</strong> <span id="configImageUrl">未配置</span></p>
+                                <p><strong>更新时间:</strong> <span id="updateTime">未更新</span></p>
+                                <p><strong>配置文件内容:</strong> <span id="configContent">未加载</span></p>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="refreshTestImage()">🔄 刷新显示</button>
+                                <button class="btn btn-primary" onclick="openTestPage()">👁️ 在新窗口测试</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面配置管理（二级页面） -->
+            <div class="page-content" id="pageConfigContent">
                 <h2>页面配置管理</h2>
                 
                 <!-- 页面基础配置 -->
@@ -710,7 +865,7 @@
                         <div class="config-section">
                             <div class="config-grid">
                                 <div class="config-item">
-                                    <label for="pageTitle">页面标题:</label>
+                                    <label for="pageTitle">网站标题:</label>
                                     <input type="text" id="pageTitle" placeholder="快捷支付" value="快捷支付">
                                 </div>
                                 <div class="config-item">
@@ -734,60 +889,6 @@
                                 <button class="btn btn-primary" onclick="savePageConfig()">💾 保存配置</button>
                                 <button class="btn btn-secondary" onclick="resetPageConfig()">🔄 重置配置</button>
                                 <button class="btn btn-info" onclick="previewPageConfig()">👁️ 预览效果</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 图片地址管理 -->
-                <div class="section">
-                    <h3>图片地址管理</h3>
-                    <div class="mode-description">
-                        <p>更新图片地址，前端将自动调用最新的图片地址</p>
-                    </div>
-                    
-                    <div class="update-module">
-                        <h4>📝 图片地址配置</h4>
-                        <div class="config-section">
-                            <div class="config-grid">
-                                <div class="config-item">
-                                    <label for="imageUrl">图片URL地址</label>
-                                    <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
-                                </div>
-                            </div>
-                            
-                            <div class="url-preview" id="urlPreview">
-                                当前图片地址: 未设置
-                            </div>
-                            
-                            <div class="button-group">
-                                <button class="btn btn-success" onclick="updateImageUrl()">💾 更新图片地址</button>
-                                <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
-                                <button class="btn btn-info" onclick="loadCurrentImageUrl()">📂 加载当前地址</button>
-                                                                 <button class="btn btn-primary" onclick="testFrontendDisplay()">👁️ 测试前端显示</button>
-                                 <button class="btn btn-secondary" onclick="testConfigFile()">📄 测试配置文件</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 测试显示区域 -->
-                <div class="section">
-                    <h3>测试显示效果</h3>
-                    <div class="test-display">
-                        <div class="test-preview">
-                            <h4>当前配置的图片效果</h4>
-                            <div class="image-container">
-                                <img id="testImage" src="" alt="测试图片" style="max-width: 100%; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                            </div>
-                            <div class="test-info">
-                                <p><strong>图片类型:</strong> <span id="imageType">未配置</span></p>
-                                <p><strong>更新时间:</strong> <span id="updateTime">未更新</span></p>
-                                <p><strong>图片地址:</strong> <span id="imageAddress">未设置</span></p>
-                            </div>
-                            <div class="button-group">
-                                <button class="btn btn-success" onclick="refreshTestImage()">刷新显示</button>
-                                <button class="btn btn-primary" onclick="openTestPage()">在新窗口测试</button>
                             </div>
                         </div>
                     </div>
@@ -866,7 +967,7 @@
         const statusMessage = document.getElementById('statusMessage');
         
         // 当前页面
-        let currentPage = 'pageConfig';
+        let currentPage = 'imageConfig';
 
         // 页面切换函数
         function switchPage(pageName) {
@@ -922,8 +1023,8 @@
             logoutBtn.style.display = 'block';
             loadConfig();
             
-            // 默认显示页面配置页面
-            switchPage('pageConfig');
+            // 默认显示图片配置页面
+            switchPage('imageConfig');
         }
 
         // 登录
@@ -1185,32 +1286,49 @@
 
         // 刷新测试图片
         function refreshTestImage() {
-            const imageUrl = localStorage.getItem('imageUrl');
-            if (imageUrl) {
-                const type = imageUrl.startsWith('data:') ? 'Base64' : 'URL';
-                updateTestDisplay(type, imageUrl);
-            } else {
-                showStatus('没有配置图片，请先配置图片！', 'info');
-            }
+            // 从配置文件加载图片地址
+            fetch('/image-config.js')
+                .then(response => response.text())
+                .then(content => {
+                    const urlMatch = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
+                    const timeMatch = content.match(/\/\/ 更新时间: (.+)/);
+                    
+                    if (urlMatch) {
+                        const imageUrl = urlMatch[1];
+                        const updateTime = timeMatch ? timeMatch[1] : '未知';
+                        
+                        // 更新显示信息
+                        document.getElementById('configImageUrl').textContent = imageUrl;
+                        document.getElementById('updateTime').textContent = updateTime;
+                        document.getElementById('configContent').textContent = content.substring(0, 100) + '...';
+                        
+                        // 显示图片
+                        const testImage = document.getElementById('testImage');
+                        testImage.src = imageUrl + '?t=' + Date.now();
+                        testImage.onload = () => {
+                            showStatus('测试图片加载成功！', 'success');
+                        };
+                        testImage.onerror = () => {
+                            showStatus('测试图片加载失败！', 'error');
+                        };
+                    } else {
+                        showStatus('配置文件格式错误！', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('加载配置文件失败:', error);
+                    showStatus('加载配置文件失败！', 'error');
+                });
         }
 
         // 在新窗口打开测试页面
         function openTestPage() {
-            const imageUrl = localStorage.getItem('imageUrl');
-            if (imageUrl) {
-                window.open('index.html', '_blank');
-            } else {
-                showStatus('没有配置图片，请先配置图片！', 'info');
-            }
+            window.open('index.html', '_blank');
         }
 
         // 加载当前配置的图片
         function loadCurrentImage() {
-            const imageUrl = localStorage.getItem('imageUrl');
-            if (imageUrl) {
-                const type = imageUrl.startsWith('data:') ? 'Base64' : 'URL';
-                updateTestDisplay(type, imageUrl);
-            }
+            refreshTestImage();
         }
 
         // 域名管理函数
@@ -1403,13 +1521,153 @@
                 countdownSeconds: '100'
             };
             
+            // 重置表单
             document.getElementById('pageTitle').value = defaultConfig.pageTitle;
             document.getElementById('paymentAmount').value = defaultConfig.paymentAmount;
             document.getElementById('validityPeriod').value = defaultConfig.validityPeriod;
             document.getElementById('scanHint').value = defaultConfig.scanHint;
             document.getElementById('countdownSeconds').value = defaultConfig.countdownSeconds;
             
-            showStatus('页面配置已重置为默认值！', 'info');
+            // 清除localStorage
+            Object.keys(defaultConfig).forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            showStatus('页面配置已重置为默认值！', 'success');
+        }
+        
+        function previewPageConfig() {
+            const config = {
+                pageTitle: document.getElementById('pageTitle').value,
+                paymentAmount: document.getElementById('paymentAmount').value,
+                validityPeriod: document.getElementById('validityPeriod').value,
+                scanHint: document.getElementById('scanHint').value,
+                countdownSeconds: document.getElementById('countdownSeconds').value
+            };
+            
+            const previewText = `
+页面配置预览：
+- 网站标题: ${config.pageTitle}
+- 支付金额: ${config.paymentAmount}
+- 有效期: ${config.validityPeriod}
+- 扫码提示: ${config.scanHint}
+- 倒计时: ${config.countdownSeconds}秒
+            `;
+            
+            alert(previewText);
+        }
+        
+        // 图片上传功能
+        function initUploadArea() {
+            const uploadArea = document.getElementById('uploadArea');
+            const imageFile = document.getElementById('imageFile');
+            
+            // 点击上传区域
+            uploadArea.addEventListener('click', () => {
+                imageFile.click();
+            });
+            
+            // 文件选择
+            imageFile.addEventListener('change', handleFileSelect);
+            
+            // 拖拽上传
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    imageFile.files = files;
+                    handleFileSelect();
+                }
+            });
+        }
+        
+        function handleFileSelect() {
+            const file = document.getElementById('imageFile').files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                showStatus('请选择图片文件！', 'error');
+                return;
+            }
+            
+            // 检查文件大小（5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                showStatus('图片文件大小不能超过5MB！', 'error');
+                return;
+            }
+            
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('uploadPreviewImage').src = e.target.result;
+                document.getElementById('uploadFileName').textContent = file.name;
+                document.getElementById('uploadFileSize').textContent = formatFileSize(file.size);
+                document.getElementById('uploadPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function uploadImage() {
+            const file = document.getElementById('imageFile').files[0];
+            if (!file) {
+                showStatus('请先选择图片文件！', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            showStatus('正在上传图片...', 'info');
+            
+            fetch('/api/upload-image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 上传成功后，更新图片地址
+                    const imageUrl = data.imageUrl;
+                    document.getElementById('imageUrl').value = imageUrl;
+                    updateImageUrl();
+                    clearUpload();
+                    showStatus('图片上传成功并已更新配置！', 'success');
+                } else {
+                    showStatus('图片上传失败: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('上传错误:', error);
+                showStatus('图片上传失败，请重试！', 'error');
+            });
+        }
+        
+        function clearUpload() {
+            document.getElementById('imageFile').value = '';
+            document.getElementById('uploadPreview').style.display = 'none';
+            document.getElementById('uploadPreviewImage').src = '';
+            document.getElementById('uploadFileName').textContent = '';
+            document.getElementById('uploadFileSize').textContent = '';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
         function previewPageConfig() {
@@ -1472,8 +1730,8 @@
         checkLogin();
         updateUrlPreview();
         
-        // 设置默认模式
-        switchMode('url');
+        // 初始化上传区域
+        initUploadArea();
         
         // 加载当前配置的图片
         loadCurrentImage();
