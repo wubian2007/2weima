@@ -779,6 +779,7 @@
                                 <button class="btn btn-info" onclick="testLocalStorage()">🔧 测试localStorage</button>
                                 <button class="btn btn-primary" onclick="generateFrontendLink()">🔗 生成前端链接</button>
                                 <button class="btn btn-danger" onclick="testImageSync()">🧪 测试图片同步</button>
+                                <button class="btn btn-success" onclick="quickUpdateImageUrl()">⚡ 快速更新图片地址</button>
                             </div>
                         </div>
                     </div>
@@ -1556,22 +1557,31 @@
             
             console.log('测试图片地址:', testImageUrl);
             
-            // 保存到localStorage
-            localStorage.setItem('imageUrl', testImageUrl);
-            localStorage.setItem('configSaveTime', Date.now().toString());
+            // 显示需要更新的代码（不再使用localStorage）
+            const updateCode = `// 在 index.html 中找到 IMAGE_CONFIG 并更新 imageUrl
+const IMAGE_CONFIG = {
+  imageUrl: '${testImageUrl}', // 更新为这个测试地址
+  fallbackUrl: '${testImageUrl}',
+  fallbackBase64: window.IMAGE_BASE64 || null
+};`;
             
-            // 强制更新
-            forceUpdateImageUrl(testImageUrl);
+            console.log('=== 测试同步 - 需要更新的代码 ===');
+            console.log(updateCode);
             
             // 更新预览
             document.getElementById('urlPreview').textContent = `测试图片地址: ${testImageUrl}`;
             
-            showStatus('测试图片同步已触发！', 'success');
+            showStatus('测试图片地址已生成！请更新前端代码', 'success');
             
             // 更新测试显示
             updateTestDisplay('测试同步', testImageUrl);
             
-            console.log('图片同步测试完成，请检查前端页面是否更新');
+            // 显示更新提示
+            setTimeout(() => {
+                alert(`测试图片地址已生成！\n\n请将以下代码更新到 index.html 文件中：\n\n${updateCode}\n\n然后重新部署到服务器。\n\n注意：这是测试地址，实际使用时请替换为真实的图片地址。`);
+            }, 1000);
+            
+            console.log('测试图片地址生成完成，请更新前端代码');
         }
         
         // 自动更新前端代码中的图片地址
@@ -1598,6 +1608,51 @@
             alert(`前端代码更新完成！\n\n新的图片地址已更新到代码中：\n${imageUrl}\n\n请重新部署到服务器以生效。`);
             
             return newImageConfig;
+        }
+        
+        // 快速更新图片地址
+        function quickUpdateImageUrl() {
+            console.log('=== 快速更新图片地址 ===');
+            
+            // 获取当前输入的图片地址
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            
+            if (!imageUrl) {
+                showStatus('请先输入图片地址！', 'error');
+                return;
+            }
+            
+            console.log('快速更新图片地址:', imageUrl);
+            
+            // 生成更新代码
+            const updateCode = `    // 图片地址配置 - 直接写在代码中，所有二级域名都使用相同的地址
+    // 注意：当您上传新图片后，请将下面的imageUrl替换为新的图片地址
+    const IMAGE_CONFIG = {
+      // 当前使用的图片地址 - 请根据后台上传的图片地址更新此处
+      imageUrl: '${imageUrl}', // 请替换为您实际上传的图片地址
+      // 备用图片地址（如果主地址不可用时使用）
+      fallbackUrl: '${imageUrl}',
+      // 备用Base64图片（如果URL不可用时使用）
+      fallbackBase64: window.IMAGE_BASE64 || null
+    };`;
+            
+            console.log('=== 快速更新 - 需要更新的代码 ===');
+            console.log(updateCode);
+            
+            // 更新预览
+            document.getElementById('urlPreview').textContent = `快速更新图片地址: ${imageUrl}`;
+            
+            showStatus('快速更新代码已生成！', 'success');
+            
+            // 更新测试显示
+            updateTestDisplay('快速更新', imageUrl);
+            
+            // 显示更新提示
+            setTimeout(() => {
+                alert(`快速更新图片地址！\n\n请将以下代码更新到 index.html 文件中：\n\n${updateCode}\n\n然后重新部署到服务器。`);
+            }, 1000);
+            
+            console.log('快速更新完成，请更新前端代码');
         }
 
         // 测试localStorage功能

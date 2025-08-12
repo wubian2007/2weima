@@ -754,8 +754,8 @@
     function debugImageSync() {
       console.log('=== 调试图片同步功能 ===');
       console.log('当前域名:', window.location.origin);
-      console.log('localStorage中的imageUrl:', localStorage.getItem('imageUrl'));
-      console.log('localStorage中的configSaveTime:', localStorage.getItem('configSaveTime'));
+      console.log('硬编码的图片地址:', IMAGE_CONFIG.imageUrl);
+      console.log('备用图片地址:', IMAGE_CONFIG.fallbackUrl);
       console.log('图片同步服务状态:', window.imageSyncService ? '已加载' : '未加载');
       
       if (window.imageSyncService) {
@@ -764,19 +764,18 @@
           syncEnabled: window.imageSyncService.syncEnabled,
           syncIntervalMs: window.imageSyncService.syncIntervalMs
         });
-        
-        // 手动触发检查
-        if (window.imageSyncService.checkForUpdates) {
-          console.log('手动触发同步检查...');
-          window.imageSyncService.checkForUpdates();
-        }
       }
       
       // 手动刷新图片
       console.log('手动刷新图片显示...');
       setImageSource();
       
-      showStatus('调试信息已输出到控制台', 'info');
+      // 显示当前图片地址信息
+      const currentImageUrl = IMAGE_CONFIG.imageUrl;
+      showStatus(`当前图片地址: ${currentImageUrl}`, 'info');
+      
+      console.log('=== 当前配置信息 ===');
+      console.log('IMAGE_CONFIG:', IMAGE_CONFIG);
     }
     
 
