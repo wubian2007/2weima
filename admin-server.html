@@ -145,6 +145,12 @@
             background: rgba(102, 126, 234, 0.05);
             transition: all 0.3s;
             cursor: pointer;
+            margin-bottom: 20px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .upload-area:hover {
@@ -257,6 +263,11 @@
         .btn-warning {
             background: #ffc107;
             color: #333;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
         }
 
         .status-message {
@@ -568,8 +579,18 @@
                         <div class="upload-icon">📁</div>
                         <div class="upload-text">点击或拖拽图片到此处上传</div>
                         <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
+                        <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
+                            点击此区域选择图片文件
+                        </div>
                     </div>
                     <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+                    
+                    <!-- 手动选择文件按钮 -->
+                    <div class="button-group" style="margin-top: 15px;">
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            📂 手动选择图片文件
+                        </button>
+                    </div>
                     
                     <div class="preview-section" id="previewSection" style="display: none;">
                         <h4>📷 上传预览</h4>
@@ -620,8 +641,18 @@
                         <div class="upload-icon">🖼️</div>
                         <div class="upload-text">点击或拖拽图片转换为Base64</div>
                         <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
+                        <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
+                            点击此区域选择图片文件
+                        </div>
                     </div>
                     <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
+                    
+                    <!-- 手动选择文件按钮 -->
+                    <div class="button-group" style="margin-top: 15px;">
+                        <button class="btn btn-primary" onclick="document.getElementById('base64FileInput').click()">
+                            📂 手动选择图片文件
+                        </button>
+                    </div>
                     
                     <div class="preview-section" id="base64PreviewSection" style="display: none;">
                         <h4>📷 Base64预览</h4>
@@ -733,8 +764,12 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
+                console.log('选择的文件:', file.name, file.size, file.type);
                 selectedFile = file;
                 previewFile(file);
+                showStatus(`已选择文件: ${file.name}`, 'info');
+            } else {
+                showStatus('未选择文件', 'error');
             }
         }
 
@@ -897,26 +932,59 @@
             }, 3000);
         }
 
-        // 拖拽上传
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+        // 拖拽上传 - 模式2
+        const uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                selectedFile = files[0];
-                previewFile(files[0]);
-            }
-        });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    selectedFile = files[0];
+                    previewFile(files[0]);
+                    showStatus(`拖拽上传文件: ${files[0].name}`, 'info');
+                }
+            });
+        }
+
+        // 拖拽上传 - 模式3
+        const base64UploadArea = document.getElementById('base64UploadArea');
+        if (base64UploadArea) {
+            base64UploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                base64UploadArea.classList.add('dragover');
+            });
+
+            base64UploadArea.addEventListener('dragleave', () => {
+                base64UploadArea.classList.remove('dragover');
+            });
+
+            base64UploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                base64UploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    if (files[0].size > 5 * 1024 * 1024) {
+                        showStatus('文件大小不能超过5MB！', 'error');
+                        return;
+                    }
+                    base64SelectedFile = files[0];
+                    previewBase64File(files[0]);
+                    showStatus(`拖拽上传文件: ${files[0].name}`, 'info');
+                }
+            });
+        }
 
         // 监听配置变化
         document.getElementById('serverUrl').addEventListener('input', updateUrlPreview);
@@ -961,12 +1029,16 @@
         function handleBase64FileSelect(event) {
             const file = event.target.files[0];
             if (file) {
+                console.log('Base64选择的文件:', file.name, file.size, file.type);
                 if (file.size > 5 * 1024 * 1024) {
                     showStatus('文件大小不能超过5MB！', 'error');
                     return;
                 }
                 base64SelectedFile = file;
                 previewBase64File(file);
+                showStatus(`已选择文件: ${file.name}`, 'info');
+            } else {
+                showStatus('未选择文件', 'error');
             }
         }
 
