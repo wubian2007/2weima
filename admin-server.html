@@ -151,6 +151,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
 
         .upload-area:hover {
@@ -567,7 +568,7 @@
             </div>
 
             <!-- 模式2: 上传图片更新 -->
-            <div class="section mode-content" id="uploadMode" style="display: none;">
+            <div class="section mode-content" id="uploadMode">
                 <h2>模式2: 上传图片更新</h2>
                 <div class="mode-description">
                     <p>上传图片到服务器，自动更新前端图片为最新上传的图片</p>
@@ -581,6 +582,9 @@
                         <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
                         <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
                             点击此区域选择图片文件
+                        </div>
+                        <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">
+                            📤 上传入口
                         </div>
                     </div>
                     <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
@@ -629,7 +633,7 @@
             </div>
 
             <!-- 模式3: Base64转换更新 -->
-            <div class="section mode-content" id="base64Mode" style="display: none;">
+            <div class="section mode-content" id="base64Mode">
                 <h2>模式3: Base64转换更新</h2>
                 <div class="mode-description">
                     <p>本地上传图片转换为Base64地址，适用于静态托管环境</p>
@@ -643,6 +647,9 @@
                         <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
                         <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
                             点击此区域选择图片文件
+                        </div>
+                        <div style="position: absolute; top: 10px; right: 10px; background: #764ba2; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">
+                            🔄 Base64转换
                         </div>
                     </div>
                     <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
@@ -997,7 +1004,8 @@
             document.querySelectorAll('.mode-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            event.target.classList.add('active');
+            // 找到对应的标签页并激活
+            document.querySelector(`[onclick="switchMode('${mode}')"]`).classList.add('active');
             
             // 更新内容显示
             document.querySelectorAll('.mode-content').forEach(content => {
