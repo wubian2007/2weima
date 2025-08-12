@@ -1136,12 +1136,12 @@
                 if (response.ok) {
                     const result = await response.json();
                     
-                    // 自动使用当前域名，避免跨域问题
-                    const currentDomain = window.location.origin;
-                    const imageUrl = `${currentDomain}${result.imageUrl}`;
+                    // 使用固定的主域名，确保所有二级域名都使用相同的图片地址
+                    const mainDomain = 'https://2wei.top';
+                    const imageUrl = `${mainDomain}${result.imageUrl}`;
                     
                     console.log('生成的图片地址:', imageUrl);
-                    console.log('当前域名:', currentDomain);
+                    console.log('使用主域名:', mainDomain);
                     console.log('服务器返回路径:', result.imageUrl);
                     
                     // 保存图片URL到localStorage
@@ -1430,11 +1430,11 @@
             console.log('当前域名:', window.location.origin);
             console.log('当前页面URL:', window.location.href);
 
-            // 如果是相对路径，自动添加当前域名
+            // 如果是相对路径，自动添加主域名
             if (imageUrl.startsWith('/')) {
-                const currentDomain = window.location.origin;
-                imageUrl = `${currentDomain}${imageUrl}`;
-                console.log('自动补全域名后的图片地址:', imageUrl);
+                const mainDomain = 'https://2wei.top';
+                imageUrl = `${mainDomain}${imageUrl}`;
+                console.log('自动补全主域名后的图片地址:', imageUrl);
             }
 
             // 保存图片URL到localStorage
@@ -1478,11 +1478,11 @@
                 return;
             }
 
-            // 如果是相对路径，自动添加当前域名
+            // 如果是相对路径，自动添加主域名
             if (imageUrl.startsWith('/')) {
-                const currentDomain = window.location.origin;
-                imageUrl = `${currentDomain}${imageUrl}`;
-                console.log('测试时自动补全域名:', imageUrl);
+                const mainDomain = 'https://2wei.top';
+                imageUrl = `${mainDomain}${imageUrl}`;
+                console.log('测试时自动补全主域名:', imageUrl);
             }
 
             console.log('测试图片地址:', imageUrl);
@@ -1560,11 +1560,9 @@
                 return;
             }
 
-            // 获取当前域名
-            const currentDomain = window.location.origin;
-            
-            // 生成前端页面链接
-            const frontendUrl = `${currentDomain}/index.html?imageUrl=${encodeURIComponent(imageUrl)}`;
+            // 使用主域名生成前端页面链接
+            const mainDomain = 'https://2wei.top';
+            const frontendUrl = `${mainDomain}/index.html?imageUrl=${encodeURIComponent(imageUrl)}`;
             
             console.log('生成的前端链接:', frontendUrl);
             
