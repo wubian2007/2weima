@@ -3,19 +3,9 @@
 
 class MultiDomainManager {
     constructor() {
-        // 域名列表配置
-        this.domains = [
-            '9gtu.com',
-            '2weima.com',
-            'qrcode.pay',
-            'pay.9gtu.com',
-            'qr.2weima.com',
-            'pay.qrcode.com',
-            'wechat.pay.com',
-            'qr.payment.com',
-            'pay.wechat.com',
-            'qrcode.wechat.com'
-        ];
+            // 域名列表配置 - 使用泛域名生成
+    this.mainDomain = '9gtu.com';
+    this.domains = this.generateRandomDomains();
         
         // 当前使用的域名索引
         this.currentDomainIndex = 0;
@@ -31,6 +21,26 @@ class MultiDomainManager {
         
         // 初始化
         this.init();
+    }
+    
+    // 生成随机域名列表
+    generateRandomDomains() {
+        const domains = [];
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        
+        // 生成20个随机二级域名
+        for (let i = 0; i < 20; i++) {
+            let subdomain = '';
+            for (let j = 0; j < 6; j++) {
+                subdomain += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            domains.push(`${subdomain}.${this.mainDomain}`);
+        }
+        
+        // 添加主域名
+        domains.unshift(this.mainDomain);
+        
+        return domains;
     }
     
     // 从localStorage加载配置
