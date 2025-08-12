@@ -35,14 +35,20 @@
         
         // 检查是否在主域名
         if (currentDomain === CONFIG.mainDomain) {
-            // 检查上次跳转时间，避免频繁跳转
-            const lastRedirectTime = localStorage.getItem(CONFIG.localStorageKey);
-            const now = Date.now();
-            
-            if (lastRedirectTime && (now - parseInt(lastRedirectTime)) < CONFIG.redirectInterval) {
+            // 检查是否有禁用跳转的参数
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('noRedirect') || urlParams.has('admin')) {
+                console.log('检测到禁用跳转参数，跳过自动跳转');
                 return false;
             }
             
+            // 检查是否在管理后台页面
+            if (window.location.pathname.includes('admin-server.html')) {
+                console.log('检测到管理后台页面，跳过自动跳转');
+                return false;
+            }
+            
+            // 每次访问主域名都跳转（移除时间间隔限制）
             return true;
         }
         

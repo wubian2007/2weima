@@ -233,6 +233,30 @@ app.post('/api/update-image-url', async (req, res) => {
     }
 });
 
+// 路由：保存页面配置
+app.post('/api/save-page-config', async (req, res) => {
+    try {
+        const { configContent } = req.body;
+        
+        if (!configContent) {
+            return res.status(400).json({ error: '缺少配置内容' });
+        }
+
+        // 保存到page-config.js文件
+        await fs.writeFile('page-config.js', configContent, 'utf8');
+        
+        res.json({
+            success: true,
+            message: '页面配置已保存',
+            updatedAt: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('保存页面配置错误:', error);
+        res.status(500).json({ error: '保存页面配置失败' });
+    }
+});
+
 // 路由：提供uploads目录的静态文件访问
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

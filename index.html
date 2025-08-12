@@ -94,6 +94,9 @@
   <!-- 自动跳转脚本 -->
   <script src="auto-redirect.js"></script>
   
+  <!-- 页面配置脚本 -->
+  <script src="page-config.js"></script>
+  
   <script>
     // 倒计时配置
     const COUNTDOWN_SECONDS = 100;
@@ -233,13 +236,36 @@
 
 
 
+    // 应用页面配置
+    function applyPageConfig() {
+      if (window.PAGE_CONFIG) {
+        // 更新页面标题
+        document.title = window.PAGE_CONFIG.pageTitle;
+        
+        // 更新头部信息
+        document.getElementById('paymentAmount').textContent = window.PAGE_CONFIG.paymentAmount;
+        document.getElementById('validityPeriod').textContent = window.PAGE_CONFIG.validityPeriod;
+        
+        // 更新扫码提示
+        document.getElementById('scanHint').textContent = window.PAGE_CONFIG.scanHint;
+        
+        // 更新倒计时秒数
+        if (window.PAGE_CONFIG.countdownSeconds) {
+          remainingSeconds = window.PAGE_CONFIG.countdownSeconds;
+          updateCountdownDisplay();
+        }
+      }
+    }
+
     // 初始化
     loadImageConfig().then(() => {
       setImageSource();
+      applyPageConfig();
       initCountdown();
     }).catch(() => {
       // 如果配置文件加载失败，使用默认图片
       setImageSource();
+      applyPageConfig();
       initCountdown();
     });
   </script>

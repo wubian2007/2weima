@@ -1659,7 +1659,7 @@
                 paymentAmount: document.getElementById('paymentAmount').value,
                 validityPeriod: document.getElementById('validityPeriod').value,
                 scanHint: document.getElementById('scanHint').value,
-                countdownSeconds: document.getElementById('countdownSeconds').value
+                countdownSeconds: parseInt(document.getElementById('countdownSeconds').value)
             };
             
             // 保存到localStorage
@@ -1670,11 +1670,39 @@
             // 保存时间戳
             localStorage.setItem('configSaveTime', Date.now().toString());
             
-            // 触发自定义事件，通知其他页面更新配置
-            window.dispatchEvent(new CustomEvent('pageConfigUpdated', { detail: config }));
+            // 生成页面配置文件内容
+            const configContent = `// 页面配置文件 - 由后台自动更新
+window.PAGE_CONFIG = {
+    pageTitle: '${config.pageTitle}',
+    paymentAmount: '${config.paymentAmount}',
+    validityPeriod: '${config.validityPeriod}',
+    scanHint: '${config.scanHint}',
+    countdownSeconds: ${config.countdownSeconds}
+};
+// 更新时间: ${new Date().toISOString()}
+`;
             
-            showStatus('页面配置已保存！', 'success');
-            console.log('页面配置已保存:', config);
+            // 保存到服务器文件
+            fetch('/api/save-page-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ configContent: configContent })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('页面配置已保存并同步到前端！', 'success');
+                    console.log('页面配置已保存:', config);
+                } else {
+                    showStatus('页面配置保存失败: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('保存页面配置失败:', error);
+                showStatus('页面配置保存失败！', 'error');
+            });
         }
         
         function resetPageConfig() {
