@@ -280,6 +280,66 @@ app.post('/api/save-page-config', async (req, res) => {
     }
 });
 
+// 路由：更新图片地址（简化版API）
+app.post('/api/update-image', async (req, res) => {
+    try {
+        const { imageUrl } = req.body;
+        
+        // 验证图片地址
+        if (!imageUrl || !imageUrl.trim()) {
+            return res.status(400).json({ 
+                success: false,
+                error: '缺少图片地址参数' 
+            });
+        }
+
+        const imageUrlTrimmed = imageUrl.trim();
+        
+        // 验证URL格式
+        try {
+            new URL(imageUrlTrimmed);
+        } catch (e) {
+            return res.status(400).json({ 
+                success: false,
+                error: '图片地址格式不正确' 
+            });
+        }
+        
+        // 保存图片地址到JSON文件
+        const imageData = {
+            imageUrl: imageUrlTrimmed,
+            updatedAt: new Date().toISOString()
+        };
+        
+        await fs.writeFile(IMAGE_URL_FILE, JSON.stringify(imageData, null, 2), 'utf8');
+        
+        // 同时更新image-config.js文件
+        const configContent = `// 图片配置文件 - 由后台自动更新
+window.CURRENT_IMAGE_URL = '${imageUrlTrimmed}';
+// 更新时间: ${new Date().toISOString()}
+`;
+        await fs.writeFile(path.join(__dirname, 'image-config.js'), configContent, 'utf8');
+        
+        console.log('图片地址已更新:', imageUrlTrimmed);
+        
+        res.json({
+            success: true,
+            message: '图片地址更新成功',
+            data: {
+                imageUrl: imageData.imageUrl,
+                updatedAt: imageData.updatedAt
+            }
+        });
+        
+    } catch (error) {
+        console.error('更新图片地址错误:', error);
+        res.status(500).json({ 
+            success: false,
+            error: '更新图片地址失败: ' + error.message 
+        });
+    }
+});
+
 // 路由：提供uploads目录的静态文件访问
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

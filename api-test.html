@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片地址更新API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="url"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .api-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .api-info h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .code {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .example {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ 图片地址更新API测试</h1>
+        
+        <div class="api-info">
+            <h3>📋 API接口信息</h3>
+            <p><strong>接口地址：</strong> <code>POST /api/update-image</code></p>
+            <p><strong>请求参数：</strong></p>
+            <div class="code">
+{
+    "imageUrl": "https://example.com/image.jpg"
+}
+            </div>
+            <p><strong>响应格式：</strong></p>
+            <div class="code">
+{
+    "success": true,
+    "message": "图片地址更新成功",
+    "data": {
+        "imageUrl": "https://example.com/image.jpg",
+        "updatedAt": "2025-08-12T08:30:00.000Z"
+    }
+}
+            </div>
+        </div>
+
+        <form id="updateForm">
+            <div class="form-group">
+                <label for="imageUrl">图片地址 (URL):</label>
+                <input type="url" id="imageUrl" name="imageUrl" 
+                       placeholder="https://example.com/image.jpg" 
+                       required>
+            </div>
+            
+            <button type="submit" id="submitBtn">更新图片地址</button>
+            <button type="button" id="testBtn">测试当前地址</button>
+            <button type="button" id="clearBtn">清空</button>
+        </form>
+
+        <div id="result" class="result"></div>
+
+        <div class="example">
+            <h3>💡 使用示例</h3>
+            <p><strong>JavaScript调用示例：</strong></p>
+            <div class="code">
+fetch('/api/update-image', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        imageUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3Dexample'
+    })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        console.log('更新成功:', data.data);
+    } else {
+        console.error('更新失败:', data.error);
+    }
+});
+            </div>
+            
+            <p><strong>cURL调用示例：</strong></p>
+            <div class="code">
+curl -X POST http://localhost:3000/api/update-image \
+  -H "Content-Type: application/json" \
+  -d '{"imageUrl": "https://example.com/image.jpg"}'
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('updateForm');
+        const imageUrlInput = document.getElementById('imageUrl');
+        const submitBtn = document.getElementById('submitBtn');
+        const testBtn = document.getElementById('testBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultDiv = document.getElementById('result');
+
+        // 更新图片地址
+        async function updateImageUrl(imageUrl) {
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '更新中...';
+                
+                const response = await fetch('/api/update-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ imageUrl })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('success', `
+                        <strong>✅ 更新成功！</strong><br>
+                        图片地址: ${data.data.imageUrl}<br>
+                        更新时间: ${new Date(data.data.updatedAt).toLocaleString()}
+                    `);
+                } else {
+                    showResult('error', `<strong>❌ 更新失败：</strong>${data.error}`);
+                }
+            } catch (error) {
+                showResult('error', `<strong>❌ 请求失败：</strong>${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '更新图片地址';
+            }
+        }
+
+        // 测试当前图片地址
+        async function testCurrentImageUrl() {
+            try {
+                testBtn.disabled = true;
+                testBtn.textContent = '测试中...';
+                
+                const response = await fetch('/api/current-image-url');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('success', `
+                        <strong>📋 当前图片地址：</strong><br>
+                        地址: ${data.imageUrl}<br>
+                        更新时间: ${data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '未知'}
+                    `);
+                } else {
+                    showResult('error', `<strong>❌ 获取失败：</strong>${data.error}`);
+                }
+            } catch (error) {
+                showResult('error', `<strong>❌ 请求失败：</strong>${error.message}`);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '测试当前地址';
+            }
+        }
+
+        // 显示结果
+        function showResult(type, message) {
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+
+        // 表单提交
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const imageUrl = imageUrlInput.value.trim();
+            
+            if (!imageUrl) {
+                showResult('error', '<strong>❌ 请输入图片地址</strong>');
+                return;
+            }
+            
+            await updateImageUrl(imageUrl);
+        });
+
+        // 测试按钮
+        testBtn.addEventListener('click', testCurrentImageUrl);
+
+        // 清空按钮
+        clearBtn.addEventListener('click', () => {
+            imageUrlInput.value = '';
+            resultDiv.style.display = 'none';
+        });
+
+        // 页面加载时测试当前地址
+        window.addEventListener('load', testCurrentImageUrl);
+    </script>
+</body>
+</html>
