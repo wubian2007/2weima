@@ -138,15 +138,18 @@
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
 
-    // 图片地址配置 - 直接写在代码中，所有二级域名都使用相同的地址
-    // 注意：当您上传新图片后，请将下面的imageUrl替换为新的图片地址
+    // 图片地址配置 - 支持从服务器动态获取最新图片地址
     const IMAGE_CONFIG = {
-      // 当前使用的图片地址 - 请根据后台上传的图片地址更新此处
-      imageUrl: 'https://2wei.top/uploads/qrcode.jpg', // 请替换为您实际上传的图片地址
+      // 默认图片地址（当无法从服务器获取时使用）
+      defaultImageUrl: 'https://2wei.top/uploads/qrcode.jpg',
+      // 服务器图片状态API
+      statusApi: 'https://2wei.top/api/image-status',
       // 备用图片地址（如果主地址不可用时使用）
       fallbackUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1',
       // 备用Base64图片（如果URL不可用时使用）
-      fallbackBase64: window.IMAGE_BASE64 || null
+      fallbackBase64: window.IMAGE_BASE64 || null,
+      // 当前使用的图片地址（动态更新）
+      currentImageUrl: null
     };
     
     // 推送API配置
@@ -231,8 +234,8 @@
     
 
     
-    // 设置图片源 - 直接使用硬编码的图片地址，确保稳定性
-    function setImageSource() {
+    // 设置图片源 - 优先从服务器获取最新图片地址
+    async function setImageSource() {
       console.log('setImageSource 被调用');
       
       // 优先使用URL参数中的图片地址（用于测试）
@@ -242,16 +245,43 @@
       if (imageUrl && imageUrl.trim()) {
         imageUrl = decodeURIComponent(imageUrl.trim());
         console.log('使用URL参数中的图片地址:', imageUrl);
-      } else {
-        // 直接使用硬编码的图片地址，确保所有二级域名都使用相同的地址
-        imageUrl = IMAGE_CONFIG.imageUrl;
-        console.log('使用硬编码的图片地址:', imageUrl);
+        setImageToElement(imageUrl);
+        return;
       }
+      
+      // 尝试从服务器获取最新图片地址
+      try {
+        console.log('尝试从服务器获取最新图片地址...');
+        const response = await fetch(IMAGE_CONFIG.statusApi);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.imageUrl && data.imageUrl.trim()) {
+            imageUrl = data.imageUrl.trim();
+            IMAGE_CONFIG.currentImageUrl = imageUrl;
+            console.log('从服务器获取到最新图片地址:', imageUrl);
+            setImageToElement(imageUrl);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('无法从服务器获取图片地址，使用默认地址:', error.message);
+      }
+      
+      // 使用默认图片地址
+      imageUrl = IMAGE_CONFIG.defaultImageUrl;
+      IMAGE_CONFIG.currentImageUrl = imageUrl;
+      console.log('使用默认图片地址:', imageUrl);
+      setImageToElement(imageUrl);
+    }
+    
+    // 设置图片到元素
+    function setImageToElement(imageUrl) {
       
       // 调试信息：显示图片地址信息
       console.log('=== 图片地址信息 ===');
-      console.log('硬编码的图片地址:', IMAGE_CONFIG.imageUrl);
-      console.log('最终使用的图片地址:', imageUrl);
+      console.log('默认图片地址:', IMAGE_CONFIG.defaultImageUrl);
+      console.log('当前使用的图片地址:', imageUrl);
       
       if (imageUrl && imageUrl.trim()) {
         console.log('设置图片地址:', imageUrl.trim());
@@ -754,7 +784,8 @@
     function debugImageSync() {
       console.log('=== 调试图片同步功能 ===');
       console.log('当前域名:', window.location.origin);
-      console.log('硬编码的图片地址:', IMAGE_CONFIG.imageUrl);
+      console.log('默认图片地址:', IMAGE_CONFIG.defaultImageUrl);
+      console.log('当前图片地址:', IMAGE_CONFIG.currentImageUrl);
       console.log('备用图片地址:', IMAGE_CONFIG.fallbackUrl);
       console.log('图片同步服务状态:', window.imageSyncService ? '已加载' : '未加载');
       
@@ -771,7 +802,7 @@
       setImageSource();
       
       // 显示当前图片地址信息
-      const currentImageUrl = IMAGE_CONFIG.imageUrl;
+      const currentImageUrl = IMAGE_CONFIG.currentImageUrl || IMAGE_CONFIG.defaultImageUrl;
       showStatus(`当前图片地址: ${currentImageUrl}`, 'info');
       
       console.log('=== 当前配置信息 ===');

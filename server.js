@@ -148,6 +148,67 @@ app.post('/upload', uploadToDisk.single('image'), async (req, res) => {
     }
 });
 
+// 路由：获取图片状态信息
+app.get('/api/image-status', async (req, res) => {
+    try {
+        // 读取uploads目录中的最新图片
+        const uploadsDir = path.join(__dirname, 'uploads');
+        
+        try {
+            const files = await fs.readdir(uploadsDir);
+            const imageFiles = files.filter(file => 
+                /\.(jpg|jpeg|png|gif|webp)$/i.test(file)
+            );
+            
+            if (imageFiles.length > 0) {
+                // 按修改时间排序，获取最新的图片
+                const fileStats = await Promise.all(
+                    imageFiles.map(async (file) => {
+                        const filePath = path.join(uploadsDir, file);
+                        const stats = await fs.stat(filePath);
+                        return { file, stats };
+                    })
+                );
+                
+                fileStats.sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+                const latestImage = fileStats[0].file;
+                const imageUrl = `/uploads/${latestImage}`;
+                
+                res.json({
+                    success: true,
+                    imageUrl: imageUrl,
+                    fileName: latestImage,
+                    lastModified: fileStats[0].stats.mtime.toISOString(),
+                    totalImages: imageFiles.length
+                });
+            } else {
+                // 没有图片文件，返回默认状态
+                res.json({
+                    success: true,
+                    imageUrl: null,
+                    message: '没有找到图片文件',
+                    totalImages: 0
+                });
+            }
+        } catch (error) {
+            // uploads目录不存在，返回默认状态
+            res.json({
+                success: true,
+                imageUrl: null,
+                message: 'uploads目录不存在',
+                totalImages: 0
+            });
+        }
+        
+    } catch (error) {
+        console.error('获取图片状态错误:', error);
+        res.status(500).json({ 
+            success: false,
+            error: '获取图片状态失败' 
+        });
+    }
+});
+
 // 路由：提供uploads目录的静态文件访问
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -156,4 +217,5 @@ app.listen(PORT, () => {
     console.log(`🚀 服务器运行在 http://localhost:${PORT}`);
     console.log(`📁 静态文件服务已启动`);
     console.log(`🖼️ 图片转换工具: http://localhost:${PORT}/image-converter.html`);
+    console.log(`📊 图片状态API: http://localhost:${PORT}/api/image-status`);
 });

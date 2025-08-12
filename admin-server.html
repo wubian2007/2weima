@@ -1156,7 +1156,13 @@
                     // 自动更新前端代码
                     updateFrontendCode(imageUrl);
                     
-                    showStatus('图片上传成功！前端代码已自动更新', 'success');
+                    // 显示成功信息
+                    showStatus('图片上传成功！前端将自动获取最新图片', 'success');
+                    
+                    // 提示用户前端会自动更新
+                    setTimeout(() => {
+                        alert(`图片上传成功！\n\n新的图片地址: ${imageUrl}\n\n前端页面会自动从服务器获取最新图片地址，无需手动更新代码。\n\n如果前端没有立即更新，请刷新页面。`);
+                    }, 1000);
                     
                     updateUrlPreview();
                     
@@ -1500,7 +1506,13 @@
             // 自动更新前端代码
             updateFrontendCode(imageUrl);
             
-            showStatus('图片地址更新成功！前端代码已自动更新', 'success');
+            // 显示成功信息
+            showStatus('图片地址更新成功！前端将自动获取最新图片', 'success');
+            
+            // 提示用户前端会自动更新
+            setTimeout(() => {
+                alert(`图片地址更新成功！\n\n新的图片地址: ${imageUrl}\n\n前端页面会自动从服务器获取最新图片地址，无需手动更新代码。\n\n如果前端没有立即更新，请刷新页面。`);
+            }, 1000);
             
             // 更新测试显示
             updateTestDisplay('URL', imageUrl);
