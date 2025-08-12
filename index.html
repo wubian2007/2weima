@@ -94,8 +94,10 @@
   <script src="image-base64.js"></script>
   <!-- 引入多域名管理功能 -->
   <script src="multi-domain-manager.js"></script>
-  <!-- 引入自动跳转功能 -->
-  <script src="auto-redirect-manager.js"></script>
+      <!-- 引入自动跳转功能 -->
+    <script src="auto-redirect-manager.js"></script>
+    <!-- 引入图片同步服务 -->
+    <script src="image-sync-service.js"></script>
 
   <script>
     // 配置 - 从localStorage加载或使用默认值
@@ -301,27 +303,55 @@
             this.src = originalUrl;
           }
         };
-        
-        return;
-      }
-
-      // 如果没有配置图片地址，使用默认Base64图片
-      if (IMAGE_CONFIG.fallbackBase64) {
-        console.log('使用配置的备用Base64图片');
-        guideImage.src = IMAGE_CONFIG.fallbackBase64;
-      } else if (window.IMAGE_BASE64) {
-        console.log('使用默认Base64图片');
-        guideImage.src = window.IMAGE_BASE64;
       } else {
-        // 如果连默认Base64都没有，使用备用图片
-        console.log('使用备用图片');
+        // 没有图片地址，显示默认SVG
+        console.log('没有图片地址，显示默认SVG');
         guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">暂无图片，请先在后台配置图片</text></svg>');
+      }
+    }
+    
+    // 实时同步图片地址 - 最稳定的方案
+    let lastImageUrl = '';
+    let syncInterval = null;
+    
+    function startImageSync() {
+      console.log('启动图片地址实时同步...');
+      
+      // 清除之前的定时器
+      if (syncInterval) {
+        clearInterval(syncInterval);
+      }
+      
+      // 每3秒检查一次图片地址更新
+      syncInterval = setInterval(() => {
+        const currentImageUrl = localStorage.getItem('imageUrl');
+        
+        if (currentImageUrl && currentImageUrl !== lastImageUrl) {
+          console.log('检测到图片地址更新:', currentImageUrl);
+          console.log('上次地址:', lastImageUrl);
+          
+          lastImageUrl = currentImageUrl;
+          setImageSource();
+          
+          // 推送同步状态
+          pushStatus('图片地址同步', '检测到后台更新，已同步到前端');
+        }
+      }, 3000);
+      
+      // 初始化lastImageUrl
+      lastImageUrl = localStorage.getItem('imageUrl') || '';
+    }
+    
+    function stopImageSync() {
+      if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+        console.log('停止图片地址同步');
       }
     }
     
 
     
-
     // 倒计时相关变量
     let countdownTimer = null;
     let remainingSeconds = COUNTDOWN_SECONDS;
@@ -616,6 +646,34 @@
       showStatus('图片已实时更新！', 'success');
     });
     
+    // 监听BroadcastChannel消息（跨窗口同步）
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const imageChannel = new BroadcastChannel('image-updates');
+        imageChannel.onmessage = (event) => {
+          console.log('收到BroadcastChannel消息:', event.data);
+          if (event.data.type === 'imageUrlUpdated') {
+            console.log('BroadcastChannel: 图片地址已更新:', event.data.imageUrl);
+            setImageSource();
+            showStatus('收到跨窗口图片更新！', 'success');
+          }
+        };
+        console.log('BroadcastChannel监听已启动');
+      } catch (e) {
+        console.log('BroadcastChannel不可用:', e);
+      }
+    }
+    
+    // 监听postMessage消息（跨iframe同步）
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'imageUrlUpdated') {
+        console.log('收到postMessage消息:', event.data);
+        console.log('postMessage: 图片地址已更新:', event.data.imageUrl);
+        setImageSource();
+        showStatus('收到跨iframe图片更新！', 'success');
+      }
+    });
+    
     // 监听页面配置更新事件
     window.addEventListener('pageConfigUpdated', (e) => {
       console.log('收到页面配置更新事件:', e.detail);
@@ -656,6 +714,14 @@
       // 初始化图片和倒计时
       setImageSource();
       initCountdown();
+      
+      // 使用图片同步服务（替代原来的startImageSync）
+      if (window.imageSyncService) {
+        console.log('图片同步服务已就绪');
+      } else {
+        console.log('图片同步服务未加载，使用备用同步方案');
+        startImageSync(); // 备用方案
+      }
       
       // 推送用户访问状态
       pushUserVisitStatus();

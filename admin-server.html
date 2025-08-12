@@ -1148,6 +1148,9 @@
                     localStorage.setItem('imageUrl', imageUrl);
                     localStorage.setItem('configSaveTime', Date.now().toString());
                     
+                    // 强制更新所有相关存储
+                    forceUpdateImageUrl(imageUrl);
+                    
                     showStatus('图片上传成功并已更新前端！', 'success');
                     updateUrlPreview();
                     
@@ -1169,6 +1172,58 @@
                 console.error('上传错误:', error);
                 showStatus(`图片上传失败：${error.message}`, 'error');
             }
+        }
+        
+        // 强制更新图片地址 - 确保所有前端都能收到更新
+        function forceUpdateImageUrl(imageUrl) {
+            console.log('强制更新图片地址:', imageUrl);
+            
+            // 1. 更新localStorage
+            localStorage.setItem('imageUrl', imageUrl);
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            // 2. 触发storage事件（跨标签页同步）
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'imageUrl',
+                newValue: imageUrl,
+                oldValue: localStorage.getItem('imageUrl'),
+                url: window.location.href
+            }));
+            
+            // 3. 触发自定义事件（同窗口同步）
+            window.dispatchEvent(new CustomEvent('imageUrlUpdated', { 
+                detail: { imageUrl } 
+            }));
+            
+            // 4. 广播到所有iframe（如果有的话）
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                try {
+                    iframe.contentWindow.postMessage({
+                        type: 'imageUrlUpdated',
+                        imageUrl: imageUrl
+                    }, '*');
+                } catch (e) {
+                    console.log('无法向iframe发送消息:', e);
+                }
+            });
+            
+            // 5. 使用BroadcastChannel API（如果支持）
+            if (typeof BroadcastChannel !== 'undefined') {
+                try {
+                    const channel = new BroadcastChannel('image-updates');
+                    channel.postMessage({
+                        type: 'imageUrlUpdated',
+                        imageUrl: imageUrl,
+                        timestamp: Date.now()
+                    });
+                    channel.close();
+                } catch (e) {
+                    console.log('BroadcastChannel不可用:', e);
+                }
+            }
+            
+            console.log('图片地址强制更新完成');
         }
 
         // 保存配置
@@ -1397,16 +1452,13 @@
                 
                 // 保存Base64数据到localStorage
                 localStorage.setItem('imageBase64', base64Data);
-                localStorage.setItem('imageUrl', base64Data);
-                localStorage.setItem('configSaveTime', Date.now().toString());
+                // 强制更新Base64数据
+                forceUpdateImageUrl(base64Data);
                 
                 showStatus('Base64转换成功并已更新前端！', 'success');
                 
                 // 更新测试显示
                 updateTestDisplay('Base64', base64Data);
-                
-                // 触发自定义事件，通知其他页面更新
-                window.dispatchEvent(new CustomEvent('imageUrlUpdated', { detail: { imageUrl: base64Data } }));
                 
                 // 显示成功信息
                 setTimeout(() => {
@@ -1437,20 +1489,8 @@
                 console.log('自动补全主域名后的图片地址:', imageUrl);
             }
 
-            // 保存图片URL到localStorage
-            console.log('保存到localStorage的地址:', imageUrl);
-            localStorage.setItem('imageUrl', imageUrl);
-            localStorage.setItem('configSaveTime', Date.now().toString());
-            
-            // 验证保存是否成功
-            const savedUrl = localStorage.getItem('imageUrl');
-            console.log('验证localStorage中的地址:', savedUrl);
-            
-            if (savedUrl === imageUrl) {
-                console.log('✅ localStorage保存成功');
-            } else {
-                console.log('❌ localStorage保存失败');
-            }
+            // 强制更新图片地址
+            forceUpdateImageUrl(imageUrl);
             
             // 更新预览
             document.getElementById('urlPreview').textContent = `当前图片地址: ${imageUrl}`;
@@ -1459,9 +1499,6 @@
             
             // 更新测试显示
             updateTestDisplay('URL', imageUrl);
-            
-            // 触发自定义事件，通知其他页面更新
-            window.dispatchEvent(new CustomEvent('imageUrlUpdated', { detail: { imageUrl } }));
             
             // 显示成功信息
             setTimeout(() => {
