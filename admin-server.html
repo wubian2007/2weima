@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>后台管理系统 - 服务器版本</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -122,6 +123,69 @@
 
         .main-content.show {
             display: block;
+        }
+
+        /* 导航菜单样式 */
+        .nav-menu {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .nav-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .nav-item.active {
+            background: #667eea;
+            color: white;
+            border-bottom-color: #764ba2;
+        }
+
+        .nav-item i {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        /* 页面内容区域 */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
         }
 
         .section {
@@ -622,204 +686,232 @@
 
         <!-- 主要内容区域 -->
         <div class="main-content" id="mainContent">
-            <!-- 服务器信息 -->
-            <div class="server-info">
-                <h3>服务器版本特性</h3>
-                <p>✅ 支持文件上传到服务器</p>
-                <p>✅ 自动生成服务器图片URL</p>
-                <p>✅ 实时预览上传的图片</p>
-                <p>✅ 支持多种图片格式</p>
+            <!-- 导航菜单 -->
+            <div class="nav-menu">
+                <div class="nav-item" onclick="switchPage('pageConfig')">
+                    <i class="fas fa-cog"></i> 页面配置
+                </div>
+                <div class="nav-item" onclick="switchPage('autoRedirect')">
+                    <i class="fas fa-random"></i> 自动跳转
+                </div>
+                <div class="nav-item" onclick="switchPage('domainManagement')">
+                    <i class="fas fa-globe"></i> 域名管理
+                </div>
             </div>
 
-            <!-- 页面配置管理区域 -->
-            <div class="section">
+            <!-- 页面内容区域 -->
+            <div class="page-content active" id="pageConfigContent">
                 <h2>页面配置管理</h2>
-                <div class="config-management">
-                    <div class="config-section">
-                        <div class="config-grid">
-                            <div class="config-item">
-                                <label for="pageTitle">页面标题:</label>
-                                <input type="text" id="pageTitle" placeholder="快捷支付" value="快捷支付">
-                            </div>
-                            <div class="config-item">
-                                <label for="paymentAmount">支付金额:</label>
-                                <input type="text" id="paymentAmount" placeholder="100-2000" value="100-2000">
-                            </div>
-                            <div class="config-item">
-                                <label for="validityPeriod">有效期:</label>
-                                <input type="text" id="validityPeriod" placeholder="100秒" value="100秒">
-                            </div>
-                            <div class="config-item">
-                                <label for="scanHint">扫码提示:</label>
-                                <input type="text" id="scanHint" placeholder="扫码支付" value="扫码支付">
-                            </div>
-                            <div class="config-item">
-                                <label for="countdownSeconds">倒计时秒数:</label>
-                                <input type="number" id="countdownSeconds" placeholder="100" value="100" min="10" max="3600">
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button class="btn btn-primary" onclick="savePageConfig()">💾 保存配置</button>
-                            <button class="btn btn-secondary" onclick="resetPageConfig()">🔄 重置配置</button>
-                            <button class="btn btn-info" onclick="previewPageConfig()">👁️ 预览效果</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 图片更新模式选择 -->
-            <div class="section">
-                <h2>图片更新模式</h2>
-                <div class="mode-selector">
-                                    <div class="mode-tabs">
-                    <button class="mode-tab active" onclick="switchMode('url')">模式1: 图片地址更新</button>
-                    <button class="mode-tab" onclick="switchMode('upload')">模式2: 上传图片更新</button>
-                    <button class="mode-tab" onclick="switchMode('base64')">模式3: Base64转换更新</button>
-                </div>
-                </div>
-            </div>
-
-            <!-- 模式1: 图片地址更新（默认模式） -->
-            <div class="section mode-content active" id="urlMode">
-                <h2>模式1: 图片地址更新</h2>
-                <div class="mode-description">
-                    <p>直接输入图片URL地址，适用于已有图片链接的情况</p>
-                </div>
                 
-                <div class="update-module">
-                    <h3>📝 图片地址配置</h3>
-                    <div class="config-section">
-                        <div class="config-grid">
-                            <div class="config-item">
-                                <label for="imageUrl">图片URL地址</label>
-                                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                <!-- 页面基础配置 -->
+                <div class="section">
+                    <h3>页面基础配置</h3>
+                    <div class="config-management">
+                        <div class="config-section">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label for="pageTitle">页面标题:</label>
+                                    <input type="text" id="pageTitle" placeholder="快捷支付" value="快捷支付">
+                                </div>
+                                <div class="config-item">
+                                    <label for="paymentAmount">支付金额:</label>
+                                    <input type="text" id="paymentAmount" placeholder="100-2000" value="100-2000">
+                                </div>
+                                <div class="config-item">
+                                    <label for="validityPeriod">有效期:</label>
+                                    <input type="text" id="validityPeriod" placeholder="100秒" value="100秒">
+                                </div>
+                                <div class="config-item">
+                                    <label for="scanHint">扫码提示:</label>
+                                    <input type="text" id="scanHint" placeholder="扫码支付" value="扫码支付">
+                                </div>
+                                <div class="config-item">
+                                    <label for="countdownSeconds">倒计时秒数:</label>
+                                    <input type="number" id="countdownSeconds" placeholder="100" value="100" min="10" max="3600">
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="savePageConfig()">💾 保存配置</button>
+                                <button class="btn btn-secondary" onclick="resetPageConfig()">🔄 重置配置</button>
+                                <button class="btn btn-info" onclick="previewPageConfig()">👁️ 预览效果</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 图片更新模式选择 -->
+                <div class="section">
+                    <h3>图片更新模式</h3>
+                    <div class="mode-selector">
+                        <div class="mode-tabs">
+                            <button class="mode-tab active" onclick="switchMode('url')">模式1: 图片地址更新</button>
+                            <button class="mode-tab" onclick="switchMode('upload')">模式2: 上传图片更新</button>
+                            <button class="mode-tab" onclick="switchMode('base64')">模式3: Base64转换更新</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模式1: 图片地址更新（默认模式） -->
+                <div class="section mode-content active" id="urlMode">
+                    <h3>模式1: 图片地址更新</h3>
+                    <div class="mode-description">
+                        <p>直接输入图片URL地址，适用于已有图片链接的情况</p>
+                    </div>
+                    
+                    <div class="update-module">
+                        <h4>📝 图片地址配置</h4>
+                        <div class="config-section">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label for="imageUrl">图片URL地址</label>
+                                    <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+                            
+                            <div class="url-preview" id="urlPreview">
+                                当前图片地址: 未设置
+                            </div>
+                            
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="updateImageUrl()">💾 更新并保存图片地址</button>
+                                <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
+                                <button class="btn btn-secondary" onclick="loadImageUrl()">📂 加载已保存的地址</button>
+                                <button class="btn btn-info" onclick="testLocalStorage()">🔧 测试localStorage</button>
+                                <button class="btn btn-primary" onclick="generateFrontendLink()">🔗 生成前端链接</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模式2: 上传图片更新 -->
+                <div class="section mode-content" id="uploadMode">
+                    <h3>模式2: 上传图片更新</h3>
+                    <div class="mode-description">
+                        <p>上传图片到服务器，自动更新前端图片为最新上传的图片</p>
+                    </div>
+                    
+                    <div class="update-module">
+                        <h4>📤 图片上传模块</h4>
+                        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">点击或拖拽图片到此处上传</div>
+                            <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
+                            <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
+                                点击此区域选择图片文件
+                            </div>
+                            <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">
+                                📤 上传入口
+                            </div>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
                         
-                        <div class="url-preview" id="urlPreview">
-                            当前图片地址: 未设置
+                        <!-- 手动选择文件按钮 -->
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                📂 手动选择图片文件
+                            </button>
                         </div>
                         
-                        <div class="button-group">
-                            <button class="btn btn-success" onclick="updateImageUrl()">💾 更新并保存图片地址</button>
-                            <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
-                            <button class="btn btn-secondary" onclick="loadImageUrl()">📂 加载已保存的地址</button>
-                            <button class="btn btn-info" onclick="testLocalStorage()">🔧 测试localStorage</button>
-                            <button class="btn btn-primary" onclick="generateFrontendLink()">🔗 生成前端链接</button>
+                        <div class="preview-section" id="previewSection" style="display: none;">
+                            <h4>📷 上传预览</h4>
+                            <img id="previewImage" class="preview-image" alt="预览图片">
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="uploadImage()">🚀 上传到服务器并更新</button>
+                                <button class="btn btn-secondary" onclick="clearPreview()">🗑️ 清除预览</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="update-module">
+                        <h4>⚙️ 服务器配置</h4>
+                        <div class="config-section">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label for="serverUrl">服务器地址</label>
+                                    <input type="text" id="serverUrl" placeholder="https://abc123.2wei.top" value="https://abc123.2wei.top">
+                                </div>
+                                <div class="config-item">
+                                    <label for="imageName">图片名称（可选）</label>
+                                    <input type="text" id="imageName" placeholder="qrcode.jpg">
+                                </div>
+                            </div>
+                            
+                            <div class="url-preview" id="uploadUrlPreview">
+                                上传后将自动生成URL
+                            </div>
+                            
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
+                                <button class="btn btn-secondary" onclick="loadConfig()">📂 加载配置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模式3: Base64转换更新 -->
+                <div class="section mode-content" id="base64Mode">
+                    <h3>模式3: Base64转换更新</h3>
+                    <div class="mode-description">
+                        <p>本地上传图片转换为Base64地址，适用于静态托管环境</p>
+                    </div>
+                    
+                    <div class="update-module">
+                        <h4>🖼️ Base64转换模块</h4>
+                        <div class="upload-area" id="base64UploadArea" onclick="document.getElementById('base64FileInput').click()">
+                            <div class="upload-icon">🖼️</div>
+                            <div class="upload-text">点击或拖拽图片转换为Base64</div>
+                            <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
+                            <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
+                                点击此区域选择图片文件
+                            </div>
+                            <div style="position: absolute; top: 10px; right: 10px; background: #764ba2; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">
+                                🔄 Base64转换
+                            </div>
+                        </div>
+                        <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
+                        
+                        <!-- 手动选择文件按钮 -->
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="document.getElementById('base64FileInput').click()">
+                                📂 手动选择图片文件
+                            </button>
+                        </div>
+                        
+                        <div class="preview-section" id="base64PreviewSection" style="display: none;">
+                            <h4>📷 Base64预览</h4>
+                            <img id="base64PreviewImage" class="preview-image" alt="Base64预览图片">
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="convertToBase64()">🔄 转换为Base64并更新</button>
+                                <button class="btn btn-secondary" onclick="clearBase64Preview()">🗑️ 清除预览</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 测试显示区域 -->
+                <div class="section">
+                    <h3>测试显示效果</h3>
+                    <div class="test-display">
+                        <div class="test-preview">
+                            <h4>当前配置的图片效果</h4>
+                            <div class="image-container">
+                                <img id="testImage" src="" alt="测试图片" style="max-width: 100%; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            </div>
+                            <div class="test-info">
+                                <p><strong>图片类型:</strong> <span id="imageType">未配置</span></p>
+                                <p><strong>更新时间:</strong> <span id="updateTime">未更新</span></p>
+                                <p><strong>图片地址:</strong> <span id="imageAddress">未设置</span></p>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-success" onclick="refreshTestImage()">刷新显示</button>
+                                <button class="btn btn-primary" onclick="openTestPage()">在新窗口测试</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 模式2: 上传图片更新 -->
-            <div class="section mode-content" id="uploadMode">
-                <h2>模式2: 上传图片更新</h2>
-                <div class="mode-description">
-                    <p>上传图片到服务器，自动更新前端图片为最新上传的图片</p>
-                </div>
-                
-                <div class="update-module">
-                    <h3>📤 图片上传模块</h3>
-                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                        <div class="upload-icon">📁</div>
-                        <div class="upload-text">点击或拖拽图片到此处上传</div>
-                        <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
-                        <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
-                            点击此区域选择图片文件
-                        </div>
-                        <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">
-                            📤 上传入口
-                        </div>
-                    </div>
-                    <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
-                    
-                    <!-- 手动选择文件按钮 -->
-                    <div class="button-group" style="margin-top: 15px;">
-                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-                            📂 手动选择图片文件
-                        </button>
-                    </div>
-                    
-                    <div class="preview-section" id="previewSection" style="display: none;">
-                        <h4>📷 上传预览</h4>
-                        <img id="previewImage" class="preview-image" alt="预览图片">
-                        <div class="button-group">
-                            <button class="btn btn-success" onclick="uploadImage()">🚀 上传到服务器并更新</button>
-                            <button class="btn btn-secondary" onclick="clearPreview()">🗑️ 清除预览</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="update-module">
-                    <h3>⚙️ 服务器配置</h3>
-                    <div class="config-section">
-                        <div class="config-grid">
-                            <div class="config-item">
-                                <label for="serverUrl">服务器地址</label>
-                                <input type="text" id="serverUrl" placeholder="https://abc123.2wei.top" value="https://abc123.2wei.top">
-                            </div>
-                            <div class="config-item">
-                                <label for="imageName">图片名称（可选）</label>
-                                <input type="text" id="imageName" placeholder="qrcode.jpg">
-                            </div>
-                        </div>
-                        
-                        <div class="url-preview" id="uploadUrlPreview">
-                            上传后将自动生成URL
-                        </div>
-                        
-                        <div class="button-group">
-                            <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
-                            <button class="btn btn-secondary" onclick="loadConfig()">📂 加载配置</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 模式3: Base64转换更新 -->
-            <div class="section mode-content" id="base64Mode">
-                <h2>模式3: Base64转换更新</h2>
-                <div class="mode-description">
-                    <p>本地上传图片转换为Base64地址，适用于静态托管环境</p>
-                </div>
-                
-                <div class="update-module">
-                    <h3>🖼️ Base64转换模块</h3>
-                    <div class="upload-area" id="base64UploadArea" onclick="document.getElementById('base64FileInput').click()">
-                        <div class="upload-icon">🖼️</div>
-                        <div class="upload-text">点击或拖拽图片转换为Base64</div>
-                        <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
-                        <div class="upload-debug" style="font-size: 12px; color: #999; margin-top: 10px;">
-                            点击此区域选择图片文件
-                        </div>
-                        <div style="position: absolute; top: 10px; right: 10px; background: #764ba2; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">
-                            🔄 Base64转换
-                        </div>
-                    </div>
-                    <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
-                    
-                    <!-- 手动选择文件按钮 -->
-                    <div class="button-group" style="margin-top: 15px;">
-                        <button class="btn btn-primary" onclick="document.getElementById('base64FileInput').click()">
-                            📂 手动选择图片文件
-                        </button>
-                    </div>
-                    
-                    <div class="preview-section" id="base64PreviewSection" style="display: none;">
-                        <h4>📷 Base64预览</h4>
-                        <img id="base64PreviewImage" class="preview-image" alt="Base64预览图片">
-                        <div class="button-group">
-                            <button class="btn btn-success" onclick="convertToBase64()">🔄 转换为Base64并更新</button>
-                            <button class="btn btn-secondary" onclick="clearBase64Preview()">🗑️ 清除预览</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
-            <!-- 自动跳转管理区域 -->
-            <div class="section">
+            <div class="page-content" id="autoRedirectContent">
                 <h2>自动跳转管理</h2>
                 <div class="auto-redirect-management">
                     <div class="redirect-status">
@@ -839,8 +931,7 @@
                 </div>
             </div>
 
-            <!-- 域名管理区域 -->
-            <div class="section">
+            <div class="page-content" id="domainManagementContent">
                 <h2>域名管理</h2>
                 <div class="domain-management">
                     <div class="domain-status">
@@ -868,27 +959,7 @@
                 </div>
             </div>
 
-            <!-- 测试显示区域 -->
-            <div class="section">
-                <h2>测试显示效果</h2>
-                <div class="test-display">
-                    <div class="test-preview">
-                        <h3>当前配置的图片效果</h3>
-                        <div class="image-container">
-                            <img id="testImage" src="" alt="测试图片" style="max-width: 100%; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        </div>
-                        <div class="test-info">
-                            <p><strong>图片类型:</strong> <span id="imageType">未配置</span></p>
-                            <p><strong>更新时间:</strong> <span id="updateTime">未更新</span></p>
-                            <p><strong>图片地址:</strong> <span id="imageAddress">未设置</span></p>
-                        </div>
-                        <div class="button-group">
-                            <button class="btn btn-success" onclick="refreshTestImage()">刷新显示</button>
-                            <button class="btn btn-warning" onclick="openTestPage()">在新窗口测试</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- 状态消息 -->
             <div class="status-message" id="statusMessage"></div>
@@ -918,6 +989,37 @@
         let selectedFile = null;
         let base64SelectedFile = null;
         let currentMode = 'url';
+        let currentPage = 'pageConfig';
+
+        // 页面切换函数
+        function switchPage(pageName) {
+            // 隐藏所有页面内容
+            const pageContents = document.querySelectorAll('.page-content');
+            pageContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有导航项的激活状态
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 显示选中的页面
+            const targetContent = document.getElementById(pageName + 'Content');
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+            
+            // 激活对应的导航项
+            const targetNav = document.querySelector(`[onclick="switchPage('${pageName}')"]`);
+            if (targetNav) {
+                targetNav.classList.add('active');
+            }
+            
+            currentPage = pageName;
+            console.log('切换到页面:', pageName);
+        }
 
         // 检查登录状态
         function checkLogin() {
@@ -942,6 +1044,9 @@
             mainContent.classList.add('show');
             logoutBtn.style.display = 'block';
             loadConfig();
+            
+            // 默认显示页面配置页面
+            switchPage('pageConfig');
         }
 
         // 登录
