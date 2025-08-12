@@ -21,6 +21,31 @@ const upload = multer({
     }
 });
 
+// 配置磁盘存储
+const diskStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // 创建uploads目录
+        const uploadDir = path.join(__dirname, 'uploads');
+        fs.mkdir(uploadDir, { recursive: true }).then(() => {
+            cb(null, uploadDir);
+        }).catch(err => {
+            cb(err);
+        });
+    },
+    filename: function (req, file, cb) {
+        // 使用原始文件名或自定义名称
+        const fileName = req.body.name || file.originalname;
+        cb(null, fileName);
+    }
+});
+
+const uploadToDisk = multer({ 
+    storage: diskStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB限制
+    }
+});
+
 // 路由：保存base64到文件
 app.post('/api/save-base64', async (req, res) => {
     try {
@@ -97,6 +122,34 @@ app.get('/api/files', async (req, res) => {
         res.status(500).json({ error: '读取文件列表失败' });
     }
 });
+
+// 路由：上传图片到服务器
+app.post('/upload', uploadToDisk.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: '没有上传文件' });
+        }
+
+        const file = req.file;
+        const imageUrl = `/uploads/${file.filename}`;
+        
+        res.json({
+            success: true,
+            message: '图片上传成功',
+            fileName: file.filename,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            imageUrl: imageUrl
+        });
+        
+    } catch (error) {
+        console.error('上传图片错误:', error);
+        res.status(500).json({ error: '上传图片失败' });
+    }
+});
+
+// 路由：提供uploads目录的静态文件访问
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 启动服务器
 app.listen(PORT, () => {
