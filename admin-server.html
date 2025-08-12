@@ -461,6 +461,100 @@
             font-weight: 600;
         }
 
+        .domain-management {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .domain-status {
+            margin-bottom: 30px;
+        }
+
+        .status-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status-info p {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .status-info strong {
+            color: #333;
+        }
+
+        .status-info span {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .domain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .domain-item {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .domain-item.current {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .domain-item.blocked {
+            border-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            opacity: 0.6;
+        }
+
+        .domain-item.available {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .domain-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .domain-status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-current {
+            background: #667eea;
+            color: white;
+        }
+
+        .status-blocked {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-available {
+            background: #28a745;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -674,6 +768,34 @@
 
 
 
+            <!-- 域名管理区域 -->
+            <div class="section">
+                <h2>域名管理</h2>
+                <div class="domain-management">
+                    <div class="domain-status">
+                        <h3>当前域名状态</h3>
+                        <div class="status-info">
+                            <p><strong>当前域名:</strong> <span id="currentDomain">加载中...</span></p>
+                            <p><strong>微信检测:</strong> <span id="wechatStatus">检测中...</span></p>
+                            <p><strong>拦截状态:</strong> <span id="blockStatus">检测中...</span></p>
+                            <p><strong>可用域名:</strong> <span id="availableCount">计算中...</span></p>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" onclick="manualSwitchDomain()">🔄 手动切换域名</button>
+                            <button class="btn btn-warning" onclick="checkAllDomains()">🔍 检查所有域名</button>
+                            <button class="btn btn-secondary" onclick="resetDomainStatus()">🔄 重置域名状态</button>
+                        </div>
+                    </div>
+                    
+                    <div class="domain-list">
+                        <h3>域名列表</h3>
+                        <div id="domainList" class="domain-grid">
+                            <!-- 域名列表将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 测试显示区域 -->
             <div class="section">
                 <h2>测试显示效果</h2>
@@ -701,9 +823,8 @@
         </div>
     </div>
 
-    <!-- 引入微信域名跳转功能 -->
-    <script src="random-domain.js"></script>
-    <script src="wechat-domain-redirect.js"></script>
+    <!-- 引入多域名管理功能 -->
+    <script src="multi-domain-manager.js"></script>
 
     <script>
         // 配置
@@ -1214,6 +1335,81 @@
             }
         }
 
+        // 域名管理函数
+        function updateDomainStatus() {
+            if (typeof multiDomainManager !== 'undefined') {
+                const status = multiDomainManager.getDomainStatus();
+                
+                document.getElementById('currentDomain').textContent = status.currentDomain;
+                document.getElementById('wechatStatus').textContent = status.isWechat ? '微信浏览器' : '其他浏览器';
+                document.getElementById('blockStatus').textContent = status.isBlocked ? '已拦截' : '正常';
+                document.getElementById('availableCount').textContent = `${status.availableDomains.length}/${status.totalDomains}`;
+                
+                // 更新域名列表
+                updateDomainList();
+            }
+        }
+        
+        function updateDomainList() {
+            if (typeof multiDomainManager !== 'undefined') {
+                const status = multiDomainManager.getDomainStatus();
+                const domainList = document.getElementById('domainList');
+                
+                domainList.innerHTML = '';
+                
+                status.availableDomains.forEach(domain => {
+                    const domainItem = document.createElement('div');
+                    domainItem.className = `domain-item available ${domain === status.currentDomain ? 'current' : ''}`;
+                    domainItem.innerHTML = `
+                        <div class="domain-name">${domain}</div>
+                        <div class="domain-status-badge status-available">可用</div>
+                    `;
+                    domainList.appendChild(domainItem);
+                });
+                
+                status.blockedDomains.forEach(domain => {
+                    const domainItem = document.createElement('div');
+                    domainItem.className = 'domain-item blocked';
+                    domainItem.innerHTML = `
+                        <div class="domain-name">${domain}</div>
+                        <div class="domain-status-badge status-blocked">已拦截</div>
+                    `;
+                    domainList.appendChild(domainItem);
+                });
+            }
+        }
+        
+        function manualSwitchDomain() {
+            if (typeof multiDomainManager !== 'undefined') {
+                multiDomainManager.manualSwitch();
+                showStatus('正在切换域名...', 'info');
+            } else {
+                showStatus('域名管理器未初始化', 'error');
+            }
+        }
+        
+        function checkAllDomains() {
+            if (typeof multiDomainManager !== 'undefined') {
+                showStatus('正在检查所有域名...', 'info');
+                multiDomainManager.checkAllDomains().then(() => {
+                    updateDomainStatus();
+                    showStatus('域名检查完成', 'success');
+                });
+            } else {
+                showStatus('域名管理器未初始化', 'error');
+            }
+        }
+        
+        function resetDomainStatus() {
+            if (typeof multiDomainManager !== 'undefined') {
+                multiDomainManager.resetAllDomains();
+                updateDomainStatus();
+                showStatus('域名状态已重置', 'success');
+            } else {
+                showStatus('域名管理器未初始化', 'error');
+            }
+        }
+        
         // 初始化
         checkLogin();
         updateUrlPreview();
@@ -1223,6 +1419,11 @@
         
         // 加载当前配置的图片
         loadCurrentImage();
+        
+        // 更新域名状态
+        setTimeout(() => {
+            updateDomainStatus();
+        }, 1000);
     </script>
 </body>
 </html>
