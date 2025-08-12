@@ -92,7 +92,7 @@
   </div>
 
   <!-- 引入图片配置文件 -->
-  <script src="image-config.js"></script>
+  <script src="image-config.js?v=1"></script>
 
   <script>
     // 倒计时配置
@@ -114,15 +114,18 @@
       
       if (imageUrl && imageUrl.trim()) {
         imageUrl = decodeURIComponent(imageUrl.trim());
-        guideImage.src = imageUrl;
+        // 为图片地址添加时间戳防止缓存
+        guideImage.src = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
         return;
       }
       
       // 使用配置文件中的图片地址
       if (window.CURRENT_IMAGE_URL) {
-        guideImage.src = window.CURRENT_IMAGE_URL;
+        // 为图片地址添加时间戳防止缓存
+        const separator = window.CURRENT_IMAGE_URL.includes('?') ? '&' : '?';
+        guideImage.src = window.CURRENT_IMAGE_URL + separator + 't=' + Date.now();
       } else {
-        guideImage.src = '/uploads/qrcode.jpg';
+        guideImage.src = '/uploads/qrcode.jpg?t=' + Date.now();
       }
     }
 
@@ -179,7 +182,28 @@
 
     // 刷新二维码
     function refreshQRCode() {
-      location.reload();
+      // 清除图片缓存
+      guideImage.src = '';
+      
+      // 清除浏览器缓存（如果支持）
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+      
+      // 重新加载配置文件（带时间戳防止缓存）
+      const script = document.createElement('script');
+      script.src = `image-config.js?v=${Date.now()}`;
+      script.onload = function() {
+        // 配置文件加载完成后，重新设置图片
+        setImageSource();
+        // 重新初始化倒计时
+        initCountdown();
+      };
+      document.head.appendChild(script);
     }
 
     // 支付按钮点击事件

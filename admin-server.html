@@ -1133,14 +1133,17 @@
                     .then(content => {
                         console.log('配置文件内容:', content);
                         
-                        // 提取图片地址
-                        const match = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
-                        if (match) {
-                            const configImageUrl = match[1];
+                        // 提取图片地址和更新时间
+                        const urlMatch = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
+                        const timeMatch = content.match(/\/\/ 更新时间: (.+)/);
+                        
+                        if (urlMatch) {
+                            const configImageUrl = urlMatch[1];
+                            const updateTime = timeMatch ? timeMatch[1] : '未知';
                             showStatus(`配置文件中的图片地址: ${configImageUrl}`, 'success');
                             
                             // 显示配置文件内容
-                            alert(`配置文件内容:\n\n${content}\n\n当前配置的图片地址: ${configImageUrl}`);
+                            alert(`配置文件内容:\n\n${content}\n\n当前配置的图片地址: ${configImageUrl}\n更新时间: ${updateTime}`);
                         } else {
                             showStatus('无法解析配置文件中的图片地址', 'error');
                         }

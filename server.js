@@ -205,7 +205,7 @@ app.post('/api/update-image-url', async (req, res) => {
         await fs.writeFile(IMAGE_URL_FILE, JSON.stringify(imageData, null, 2), 'utf8');
         
         // 同时更新image-config.js文件
-        const configContent = `// 图片配置文件 - 由后台自动更新\nwindow.CURRENT_IMAGE_URL = '${imageUrlTrimmed}';\n`;
+        const configContent = `// 图片配置文件 - 由后台自动更新\nwindow.CURRENT_IMAGE_URL = '${imageUrlTrimmed}';\n// 更新时间: ${new Date().toISOString()}\n`;
         await fs.writeFile(path.join(__dirname, 'image-config.js'), configContent, 'utf8');
         
         res.json({
