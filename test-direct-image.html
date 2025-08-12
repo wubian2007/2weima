@@ -133,6 +133,7 @@
             </div>
             <button class="button" onclick="checkLocalStorage()">检查localStorage</button>
             <button class="button" onclick="clearLocalStorage()">清除localStorage</button>
+            <button class="button" onclick="setTestImageUrl()">设置测试图片地址</button>
         </div>
 
         <div class="test-section">
@@ -241,6 +242,17 @@
             localStorage.removeItem('imageUrl');
             localStorage.removeItem('configSaveTime');
             checkLocalStorage();
+        }
+
+        // 设置测试图片地址
+        function setTestImageUrl() {
+            log('设置测试图片地址到localStorage...');
+            const testUrl = 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1';
+            localStorage.setItem('imageUrl', testUrl);
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            log(`已将图片地址保存到localStorage: ${testUrl}`);
+            checkLocalStorage();
+            simulateFrontendLogic();
         }
 
         // 模拟前端页面的图片加载逻辑
