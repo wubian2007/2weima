@@ -360,6 +360,42 @@
             display: block;
         }
 
+        .mode-description {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mode-description p {
+            color: #1976d2;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .update-module {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .update-module h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .update-module h4 {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
         .test-display {
             background: white;
             border: 2px solid #e1e5e9;
@@ -481,95 +517,119 @@
             <div class="section">
                 <h2>图片更新模式</h2>
                 <div class="mode-selector">
-                    <div class="mode-tabs">
-                        <button class="mode-tab active" onclick="switchMode('base64')">模式1: 图片转Base64</button>
-                        <button class="mode-tab" onclick="switchMode('url')">模式2: 图片地址更新</button>
-                        <button class="mode-tab" onclick="switchMode('upload')">模式3: 上传图片更新</button>
-                    </div>
+                                    <div class="mode-tabs">
+                    <button class="mode-tab active" onclick="switchMode('url')">模式1: 图片地址更新</button>
+                    <button class="mode-tab" onclick="switchMode('upload')">模式2: 上传图片更新</button>
+                    <button class="mode-tab" onclick="switchMode('base64')">模式3: Base64转换更新</button>
+                </div>
                 </div>
             </div>
 
-            <!-- 模式1: 图片转Base64 -->
-            <div class="section mode-content" id="base64Mode">
-                <h2>模式1: 图片转Base64</h2>
-                <div class="upload-area" id="base64UploadArea" onclick="document.getElementById('base64FileInput').click()">
-                    <div class="upload-icon">🖼️</div>
-                    <div class="upload-text">点击或拖拽图片转换为Base64</div>
-                    <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
+            <!-- 模式1: 图片地址更新（默认模式） -->
+            <div class="section mode-content active" id="urlMode">
+                <h2>模式1: 图片地址更新</h2>
+                <div class="mode-description">
+                    <p>直接输入图片URL地址，适用于已有图片链接的情况</p>
                 </div>
-                <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
                 
-                <div class="preview-section" id="base64PreviewSection" style="display: none;">
-                    <h3>Base64预览</h3>
-                    <img id="base64PreviewImage" class="preview-image" alt="Base64预览图片">
-                    <div class="button-group">
-                        <button class="btn btn-success" onclick="convertToBase64()">转换为Base64并更新</button>
-                        <button class="btn btn-secondary" onclick="clearBase64Preview()">清除预览</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 模式2: 图片地址更新 -->
-            <div class="section mode-content" id="urlMode" style="display: none;">
-                <h2>模式2: 图片地址更新</h2>
-                <div class="config-section">
-                    <div class="config-grid">
-                        <div class="config-item">
-                            <label for="imageUrl">图片URL地址</label>
-                            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                <div class="update-module">
+                    <h3>📝 图片地址配置</h3>
+                    <div class="config-section">
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label for="imageUrl">图片URL地址</label>
+                                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                            </div>
+                        </div>
+                        
+                        <div class="url-preview" id="urlPreview">
+                            当前图片地址: 未设置
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="updateImageUrl()">💾 更新并保存图片地址</button>
+                            <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
+                            <button class="btn btn-secondary" onclick="loadImageUrl()">📂 加载已保存的地址</button>
                         </div>
                     </div>
-                    <div class="url-preview" id="urlPreview">
-                        当前图片地址: 未设置
-                    </div>
-                    <div class="button-group">
-                        <button class="btn btn-success" onclick="updateImageUrl()">更新图片地址</button>
-                        <button class="btn btn-warning" onclick="testImageUrl()">测试图片地址</button>
-                        <button class="btn btn-secondary" onclick="loadImageUrl()">加载已保存的地址</button>
-                    </div>
                 </div>
             </div>
 
-            <!-- 模式3: 上传图片更新 -->
+            <!-- 模式2: 上传图片更新 -->
             <div class="section mode-content" id="uploadMode" style="display: none;">
-                <h2>模式3: 上传图片更新</h2>
-                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                    <div class="upload-icon">📁</div>
-                    <div class="upload-text">点击或拖拽图片到此处上传</div>
-                    <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
+                <h2>模式2: 上传图片更新</h2>
+                <div class="mode-description">
+                    <p>上传图片到服务器，自动更新前端图片为最新上传的图片</p>
                 </div>
-                <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
                 
-                <div class="preview-section" id="previewSection" style="display: none;">
-                    <h3>预览</h3>
-                    <img id="previewImage" class="preview-image" alt="预览图片">
-                    <div class="button-group">
-                        <button class="btn btn-success" onclick="uploadImage()">上传到服务器</button>
-                        <button class="btn btn-secondary" onclick="clearPreview()">清除预览</button>
+                <div class="update-module">
+                    <h3>📤 图片上传模块</h3>
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">点击或拖拽图片到此处上传</div>
+                        <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 10MB</div>
+                    </div>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+                    
+                    <div class="preview-section" id="previewSection" style="display: none;">
+                        <h4>📷 上传预览</h4>
+                        <img id="previewImage" class="preview-image" alt="预览图片">
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="uploadImage()">🚀 上传到服务器并更新</button>
+                            <button class="btn btn-secondary" onclick="clearPreview()">🗑️ 清除预览</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 服务器配置 -->
-                <div class="config-section" style="margin-top: 30px;">
-                    <h3>服务器配置</h3>
-                    <div class="config-grid">
-                        <div class="config-item">
-                            <label for="serverUrl">服务器地址</label>
-                            <input type="text" id="serverUrl" placeholder="http://localhost:3000" value="http://localhost:3000">
+                <div class="update-module">
+                    <h3>⚙️ 服务器配置</h3>
+                    <div class="config-section">
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label for="serverUrl">服务器地址</label>
+                                <input type="text" id="serverUrl" placeholder="https://9gtu.com" value="https://9gtu.com">
+                            </div>
+                            <div class="config-item">
+                                <label for="imageName">图片名称（可选）</label>
+                                <input type="text" id="imageName" placeholder="qrcode.jpg">
+                            </div>
                         </div>
-                        <div class="config-item">
-                            <label for="imageName">图片名称（可选）</label>
-                            <input type="text" id="imageName" placeholder="qrcode.jpg">
+                        
+                        <div class="url-preview" id="uploadUrlPreview">
+                            上传后将自动生成URL
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
+                            <button class="btn btn-secondary" onclick="loadConfig()">📂 加载配置</button>
                         </div>
                     </div>
-                    
-                    <div class="url-preview" id="uploadUrlPreview">
-                        上传后将自动生成URL
+                </div>
+            </div>
+
+            <!-- 模式3: Base64转换更新 -->
+            <div class="section mode-content" id="base64Mode" style="display: none;">
+                <h2>模式3: Base64转换更新</h2>
+                <div class="mode-description">
+                    <p>本地上传图片转换为Base64地址，适用于静态托管环境</p>
+                </div>
+                
+                <div class="update-module">
+                    <h3>🖼️ Base64转换模块</h3>
+                    <div class="upload-area" id="base64UploadArea" onclick="document.getElementById('base64FileInput').click()">
+                        <div class="upload-icon">🖼️</div>
+                        <div class="upload-text">点击或拖拽图片转换为Base64</div>
+                        <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
                     </div>
+                    <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
                     
-                    <div class="button-group">
-                        <button class="btn btn-success" onclick="saveConfig()">保存配置</button>
-                        <button class="btn btn-secondary" onclick="loadConfig()">加载配置</button>
+                    <div class="preview-section" id="base64PreviewSection" style="display: none;">
+                        <h4>📷 Base64预览</h4>
+                        <img id="base64PreviewImage" class="preview-image" alt="Base64预览图片">
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="convertToBase64()">🔄 转换为Base64并更新</button>
+                            <button class="btn btn-secondary" onclick="clearBase64Preview()">🗑️ 清除预览</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -621,7 +681,7 @@
         // 当前选中的文件
         let selectedFile = null;
         let base64SelectedFile = null;
-        let currentMode = 'base64';
+        let currentMode = 'url';
 
         // 检查登录状态
         function checkLogin() {
@@ -736,11 +796,16 @@
                     localStorage.setItem('imageUrl', imageUrl);
                     localStorage.setItem('configSaveTime', Date.now().toString());
                     
-                    showStatus('图片上传成功！', 'success');
+                    showStatus('图片上传成功并已更新前端！', 'success');
                     updateUrlPreview();
                     
                     // 更新测试显示
                     updateTestDisplay('服务器上传', imageUrl);
+                    
+                    // 显示成功信息
+                    setTimeout(() => {
+                        showStatus('✅ 图片已上传到服务器并更新前端显示', 'success');
+                    }, 1000);
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || '上传失败');
@@ -942,10 +1007,15 @@
                 localStorage.setItem('imageUrl', base64Data);
                 localStorage.setItem('configSaveTime', Date.now().toString());
                 
-                showStatus('Base64转换成功并已更新！', 'success');
+                showStatus('Base64转换成功并已更新前端！', 'success');
                 
                 // 更新测试显示
                 updateTestDisplay('Base64', base64Data);
+                
+                // 显示成功信息
+                setTimeout(() => {
+                    showStatus('✅ Base64图片已转换并更新前端显示', 'success');
+                }, 1000);
             };
             reader.readAsDataURL(base64SelectedFile);
         }
@@ -966,10 +1036,15 @@
             // 更新预览
             document.getElementById('urlPreview').textContent = `当前图片地址: ${imageUrl}`;
             
-            showStatus('图片地址更新成功！', 'success');
+            showStatus('图片地址更新成功并已保存！', 'success');
             
             // 更新测试显示
             updateTestDisplay('URL', imageUrl);
+            
+            // 显示成功信息
+            setTimeout(() => {
+                showStatus('✅ 图片地址已更新并保存到前端', 'success');
+            }, 1000);
         }
 
         // 测试图片地址
@@ -1061,7 +1136,7 @@
         updateUrlPreview();
         
         // 设置默认模式
-        switchMode('base64');
+        switchMode('url');
         
         // 加载当前配置的图片
         loadCurrentImage();

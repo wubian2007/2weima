@@ -61,7 +61,7 @@ echo ""
 # 检查SSH连接
 check_ssh() {
     echo -e "${YELLOW}🔍 检查SSH连接...${NC}"
-    if ssh -o ConnectTimeout=10 $SERVER_USER@$SERVER_HOST "echo 'SSH连接测试成功'" 2>/dev/null; then
+    if ssh -i ~/.ssh/2weima-server -o ConnectTimeout=10 -o BatchMode=yes $SERVER_USER@$SERVER_HOST "echo 'SSH连接测试成功'" 2>/dev/null; then
         echo -e "${GREEN}✅ SSH连接正常${NC}"
         return 0
     else
@@ -98,7 +98,7 @@ local_git_ops() {
 # 服务器端操作
 server_ops() {
     echo -e "${YELLOW}🔗 连接到服务器并更新...${NC}"
-    ssh ${SERVER_USER}@${SERVER_HOST} << EOF
+    ssh -i ~/.ssh/2weima-server ${SERVER_USER}@${SERVER_HOST} << EOF
         echo "📁 进入网站目录..."
         cd ${SERVER_PATH}
         
