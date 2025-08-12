@@ -87,48 +87,15 @@
     <footer class="footer">
       <button id="reloadBtn" class="btn ghost">刷新二维码</button>
       <button id="payBtn" class="btn primary">长按图片识别支付</button>
-      <button id="debugBtn" class="btn" style="background: #dc3545; color: white;" onclick="debugImageSync()">🧪 调试同步</button>
+      
     </footer>
   </div>
 
-  <!-- 引入base64图片数据 -->
-  <script src="image-base64.js"></script>
-  <!-- 引入多域名管理功能 -->
-  <script src="multi-domain-manager.js"></script>
-      <!-- 引入自动跳转功能 -->
-    <script src="auto-redirect-manager.js"></script>
-    <!-- 引入图片同步服务 -->
-    <script src="image-sync-service.js"></script>
+
 
   <script>
-    // 配置 - 从localStorage加载或使用默认值
-    const DEFAULT_CONFIG = {
-      countdownSeconds: 100,
-      paymentAmount: '100-2000',
-      validityPeriod: '100秒',
-      scanHint: '扫码支付'
-    };
-    
-    // 加载配置
-    function loadConfig() {
-      const config = {};
-      Object.keys(DEFAULT_CONFIG).forEach(key => {
-        const saved = localStorage.getItem(key);
-        config[key] = saved !== null ? saved : DEFAULT_CONFIG[key];
-      });
-      return config;
-    }
-    
-    // 应用配置到界面
-    function applyConfig(config) {
-      document.getElementById('paymentAmount').textContent = config.paymentAmount;
-      document.getElementById('validityPeriod').textContent = config.validityPeriod;
-      document.getElementById('scanHint').textContent = config.scanHint;
-      return config.countdownSeconds;
-    }
-    
-    const config = loadConfig();
-    const COUNTDOWN_SECONDS = applyConfig(config);
+    // 倒计时配置
+    const COUNTDOWN_SECONDS = 100;
     
     // DOM元素
     const guideImage = document.getElementById('guideImage');
@@ -138,252 +105,22 @@
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
 
-    // 图片地址配置 - 从服务器获取最新图片地址
-    const IMAGE_CONFIG = {
-      // 服务器图片地址API
-      imageUrlApi: 'https://2wei.top/api/current-image-url',
-      // 默认图片地址（当无法从服务器获取时使用）
-      defaultImageUrl: 'https://2wei.top/uploads/qrcode.jpg',
-      // 备用图片地址（如果主地址不可用时使用）
-      fallbackUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1',
-      // 备用Base64图片（如果URL不可用时使用）
-      fallbackBase64: window.IMAGE_BASE64 || null,
-      // 当前使用的图片地址
-      currentImageUrl: null
-    };
-    
-    // 推送API配置
-    const PUSH_CONFIG = {
-      apiUrl: 'https://api.day.app/8ckKiMHSJ95i3SANuBQAu3/',
-      enabled: true
-    };
-    
-    // 用户状态监控
-    const USER_STATUS = {
-      visitTime: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      screenSize: `${screen.width}x${screen.height}`,
-      actions: []
-    };
-    
-    // 推送状态到API
-    function pushStatus(action, details = '') {
-      if (!PUSH_CONFIG.enabled) return;
-      
-      try {
-        // 记录用户行为
-        USER_STATUS.actions.push({
-          action: action,
-          details: details,
-          timestamp: new Date().toISOString()
-        });
-        
-        // 构建推送内容
-        const pushContent = encodeURIComponent(`用户行为: ${action} | ${details}`);
-        const pushUrl = `${PUSH_CONFIG.apiUrl}${pushContent}`;
-        
-        console.log('推送状态:', action, details);
-        console.log('推送URL:', pushUrl);
-        
-        // 发送推送请求
-        fetch(pushUrl)
-          .then(response => response.json())
-          .then(data => {
-            console.log('推送成功:', data);
-          })
-          .catch(error => {
-            console.error('推送失败:', error);
-          });
-          
-      } catch (error) {
-        console.error('推送状态时出错:', error);
-      }
-    }
-    
-    // 获取用户IP地址
-    function getUserIP() {
-      return new Promise((resolve) => {
-        fetch('https://api.ipify.org?format=json')
-          .then(response => response.json())
-          .then(data => {
-            resolve(data.ip);
-          })
-          .catch(() => {
-            resolve('未知');
-          });
-      });
-    }
-    
-    // 检测设备类型
-    function getDeviceType() {
-      const ua = navigator.userAgent;
-      if (/Android/i.test(ua)) return 'Android';
-      if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
-      if (/Windows/i.test(ua)) return 'Windows';
-      if (/Mac/i.test(ua)) return 'Mac';
-      if (/Linux/i.test(ua)) return 'Linux';
-      return '其他';
-    }
-    
-    // 检测是否在微信中
-    function isWechatBrowser() {
-      return /MicroMessenger/i.test(navigator.userAgent);
-    }
-    
-
-    
-    // 设置图片源 - 从服务器获取当前图片地址
-    async function setImageSource() {
-      console.log('setImageSource 被调用');
-      
+    // 设置图片源
+    function setImageSource() {
       // 优先使用URL参数中的图片地址（用于测试）
       const urlParams = new URLSearchParams(window.location.search);
       let imageUrl = urlParams.get('imageUrl');
       
       if (imageUrl && imageUrl.trim()) {
         imageUrl = decodeURIComponent(imageUrl.trim());
-        console.log('使用URL参数中的图片地址:', imageUrl);
-        setImageToElement(imageUrl);
+        guideImage.src = imageUrl;
         return;
       }
       
-      // 从服务器获取当前图片地址
-      try {
-        console.log('从服务器获取当前图片地址...');
-        const response = await fetch(IMAGE_CONFIG.imageUrlApi);
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.imageUrl && data.imageUrl.trim()) {
-            imageUrl = data.imageUrl.trim();
-            IMAGE_CONFIG.currentImageUrl = imageUrl;
-            console.log('从服务器获取到当前图片地址:', imageUrl);
-            setImageToElement(imageUrl);
-            return;
-          }
-        }
-      } catch (error) {
-        console.log('无法从服务器获取图片地址，使用默认地址:', error.message);
-      }
-      
       // 使用默认图片地址
-      imageUrl = IMAGE_CONFIG.defaultImageUrl;
-      IMAGE_CONFIG.currentImageUrl = imageUrl;
-      console.log('使用默认图片地址:', imageUrl);
-      setImageToElement(imageUrl);
+      guideImage.src = '/uploads/qrcode.jpg';
     }
-    
-    // 设置图片到元素
-    function setImageToElement(imageUrl) {
-      
-      // 调试信息：显示图片地址信息
-      console.log('=== 图片地址信息 ===');
-      console.log('默认图片地址:', IMAGE_CONFIG.defaultImageUrl);
-      console.log('当前使用的图片地址:', imageUrl);
-      
-      if (imageUrl && imageUrl.trim()) {
-        console.log('设置图片地址:', imageUrl.trim());
-        
-        // 判断图片地址类型
-        const imageUrlTrimmed = imageUrl.trim();
-        let finalImageUrl = imageUrlTrimmed;
-        
-        if (imageUrlTrimmed.startsWith('data:')) {
-          // Base64图片，直接使用
-          console.log('检测到Base64图片地址');
-          finalImageUrl = imageUrlTrimmed;
-        } else if (imageUrlTrimmed.startsWith('http')) {
-          // HTTP/HTTPS URL，直接使用，添加时间戳防止缓存
-          console.log('检测到HTTP URL图片地址');
-          finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-        } else if (imageUrlTrimmed.startsWith('/')) {
-          // 相对路径，添加当前域名和时间戳
-          console.log('检测到相对路径图片地址');
-          const currentDomain = window.location.origin;
-          finalImageUrl = currentDomain + imageUrlTrimmed + '?t=' + Date.now();
-        } else {
-          // 其他情况，直接使用
-          console.log('使用原始图片地址');
-          finalImageUrl = imageUrlTrimmed;
-        }
-        
-        console.log('最终图片地址:', finalImageUrl);
-        guideImage.src = finalImageUrl;
-        
-        // 添加图片加载事件监听
-        guideImage.onload = function() {
-          console.log('图片加载成功:', this.src);
-          showStatus('图片加载成功！', 'success');
-          
-          // 推送图片加载成功
-          pushStatus('图片加载成功', 'QQ支付二维码已显示');
-        };
-        
-        guideImage.onerror = function() {
-          console.log('图片加载失败:', this.src);
-          showStatus('图片加载失败！', 'error');
-          
-          // 推送图片加载失败
-          pushStatus('图片加载失败', 'QQ支付二维码加载失败');
-          
-          // 如果加载失败且是带时间戳的URL，尝试不带时间戳
-          if (this.src.includes('?t=') && !this.src.startsWith('data:')) {
-            console.log('尝试不带时间戳的URL');
-            const originalUrl = this.src.split('?t=')[0];
-            this.src = originalUrl;
-          }
-        };
-      } else {
-        // 没有图片地址，显示默认SVG
-        console.log('没有图片地址，显示默认SVG');
-        guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">暂无图片，请先在后台配置图片</text></svg>');
-      }
-    }
-    
-    // 实时同步图片地址 - 最稳定的方案
-    let lastImageUrl = '';
-    let syncInterval = null;
-    
-    function startImageSync() {
-      console.log('启动图片地址实时同步...');
-      
-      // 清除之前的定时器
-      if (syncInterval) {
-        clearInterval(syncInterval);
-      }
-      
-      // 每3秒检查一次图片地址更新
-      syncInterval = setInterval(() => {
-        const currentImageUrl = localStorage.getItem('imageUrl');
-        
-        if (currentImageUrl && currentImageUrl !== lastImageUrl) {
-          console.log('检测到图片地址更新:', currentImageUrl);
-          console.log('上次地址:', lastImageUrl);
-          
-          lastImageUrl = currentImageUrl;
-          setImageSource();
-          
-          // 推送同步状态
-          pushStatus('图片地址同步', '检测到后台更新，已同步到前端');
-        }
-      }, 3000);
-      
-      // 初始化lastImageUrl
-      lastImageUrl = localStorage.getItem('imageUrl') || '';
-    }
-    
-    function stopImageSync() {
-      if (syncInterval) {
-        clearInterval(syncInterval);
-        syncInterval = null;
-        console.log('停止图片地址同步');
-      }
-    }
-    
 
-    
     // 倒计时相关变量
     let countdownTimer = null;
     let remainingSeconds = COUNTDOWN_SECONDS;
@@ -391,27 +128,7 @@
 
     // 初始化倒计时
     function initCountdown() {
-      // 从localStorage读取倒计时配置和保存时间
-      const savedCountdown = localStorage.getItem('countdownSeconds');
-      const saveTime = localStorage.getItem('configSaveTime');
-      
-      if (savedCountdown && saveTime) {
-        // 计算从保存时间开始的剩余时间
-        const elapsed = Math.floor((Date.now() - parseInt(saveTime)) / 1000);
-        remainingSeconds = parseInt(savedCountdown) - elapsed;
-        
-        if (remainingSeconds <= 0) {
-          // 已过期
-          remainingSeconds = 0;
-          isExpired = true;
-          handleExpired();
-          return;
-        }
-      } else {
-        // 没有保存时间，使用默认倒计时
-        remainingSeconds = savedCountdown ? parseInt(savedCountdown) : COUNTDOWN_SECONDS;
-      }
-      
+      remainingSeconds = COUNTDOWN_SECONDS;
       isExpired = false;
       updateCountdownDisplay();
       startCountdown();
@@ -438,7 +155,6 @@
       const seconds = remainingSeconds % 60;
       countdownText.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
       
-      // 当剩余时间少于30秒时，改变颜色
       if (remainingSeconds <= 30) {
         countdown.classList.add('expired');
       } else {
@@ -452,371 +168,34 @@
       expiredOverlay.classList.add('show');
       countdown.classList.add('expired');
       countdownText.textContent = '已过期';
-      
-      // 禁用支付按钮
       payBtn.disabled = true;
       payBtn.style.opacity = '0.5';
-      
-      // 更新刷新按钮文本
-      reloadBtn.textContent = '刷新二维码';
-      
-      // 更新过期提示文本
-      const expiredDesc = document.querySelector('.expired-desc');
-      if (expiredDesc) {
-        expiredDesc.textContent = '点击刷新';
-      }
-      
-      // 推送过期状态
-      pushStatus('二维码已过期', '倒计时结束');
     }
 
-    // 刷新二维码功能 - 带图片更新检测
+    // 刷新二维码
     function refreshQRCode() {
-      console.log('刷新二维码被调用');
-      
-      // 推送刷新行为
-      const deviceType = getDeviceType();
-      const isWechat = isWechatBrowser();
-      const refreshDetails = `设备:${deviceType} | 微信:${isWechat ? '是' : '否'}`;
-      pushStatus('点击刷新二维码', refreshDetails);
-      
-      // 清除过期状态
-      isExpired = false;
-      expiredOverlay.classList.remove('show');
-      countdown.classList.remove('expired');
-      
-      // 重新启用支付按钮
-      payBtn.disabled = false;
-      payBtn.style.opacity = '1';
-      
-      // 保存当前图片URL用于比较
-      const currentImageUrl = guideImage.src;
-      console.log('当前图片URL:', currentImageUrl);
-      
-      // 显示刷新提示
-      showStatus('正在刷新二维码...', 'info');
-      
-      // 强制清除图片缓存
-      guideImage.src = '';
-      
-      // 重新加载图片（使用固定配置或localStorage中的更新地址）
-      setImageSource();
-      
-      // 检测图片是否更新
-      setTimeout(() => {
-        const newImageUrl = guideImage.src;
-        console.log('新图片URL:', newImageUrl);
-        
-        // 比较图片地址（忽略时间戳）
-        const currentUrlWithoutTimestamp = currentImageUrl.split('?t=')[0];
-        const newUrlWithoutTimestamp = newImageUrl.split('?t=')[0];
-        
-        if (newUrlWithoutTimestamp === currentUrlWithoutTimestamp) {
-          showStatus('二维码未更新，请稍后再试', 'warning');
-        } else {
-          showStatus('二维码已更新！', 'success');
-        }
-      }, 1000);
-      
-      // 重新初始化倒计时
-      initCountdown();
+      location.reload();
     }
 
-    // 支付按钮点击事件 - 缩小图片留出边框
+    // 支付按钮点击事件
     function handlePayClick() {
       if (isExpired) {
         alert('二维码已过期，请刷新二维码');
         return;
       }
       
-      console.log('长按图片识别支付按钮被点击...');
-      
-      // 推送用户行为
-      const deviceType = getDeviceType();
-      const isWechat = isWechatBrowser();
-      const actionDetails = `设备:${deviceType} | 微信:${isWechat ? '是' : '否'}`;
-      pushStatus('点击长按识别支付', actionDetails);
-      
-      // 检查是否在微信环境中
-      
-      if (isWechat) {
-        // 在微信中，缩小图片留出绿色边框
-        console.log('检测到微信环境，缩小图片留出边框');
-        
-        // 推送长按行为
-        pushStatus('长按图片操作', '微信环境 | 图片已缩小');
-        
-        // 缩小图片，留出绿色边框
-        guideImage.style.width = '90%';
-        guideImage.style.height = '90%';
-        guideImage.style.margin = '5%';
-        guideImage.style.borderRadius = '10px';
-        
-        // 3秒后恢复
-        setTimeout(() => {
-          guideImage.style.width = '';
-          guideImage.style.height = '';
-          guideImage.style.margin = '';
-          guideImage.style.borderRadius = '';
-        }, 3000);
-        
-      } else {
-        // 非微信环境，显示提示
-        console.log('非微信环境，显示提示');
-        showStatus('请在微信中打开此页面进行支付', 'warning');
-        
-        // 推送非微信环境行为
-        pushStatus('非微信环境访问', '提示打开微信');
-        
-        // 尝试打开微信
-        setTimeout(() => {
-          if (confirm('是否要打开微信？')) {
-            // 尝试打开微信（iOS和Android的微信URL scheme）
-            window.location.href = 'weixin://';
-          }
-        }, 1000);
-      }
+      alert('请长按图片进行识别支付');
     }
 
     // 绑定事件
     reloadBtn.addEventListener('click', refreshQRCode);
     payBtn.addEventListener('click', handlePayClick);
 
-    // 显示状态提示
-    function showStatus(message, type) {
-      // 创建状态提示元素
-      const statusDiv = document.createElement('div');
-      statusDiv.id = 'statusMessage';
-      
-      // 根据类型设置样式
-      let bgColor = '#333';
-      let textColor = '#fff';
-      
-      switch(type) {
-        case 'success':
-          bgColor = '#28a745';
-          break;
-        case 'error':
-          bgColor = '#dc3545';
-          break;
-        case 'warning':
-          bgColor = '#ffc107';
-          textColor = '#333';
-          break;
-        case 'info':
-          bgColor = '#17a2b8';
-          break;
-      }
-      
-      statusDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${bgColor};
-        color: ${textColor};
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        z-index: 2000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-      `;
-      
-      statusDiv.textContent = message;
-      
-      // 移除已存在的状态提示
-      const existingStatus = document.getElementById('statusMessage');
-      if (existingStatus) {
-        existingStatus.remove();
-      }
-      
-      // 添加到页面
-      document.body.appendChild(statusDiv);
-      
-      // 3秒后自动移除
-      setTimeout(() => {
-        if (statusDiv.parentNode) {
-          statusDiv.style.opacity = '0';
-          statusDiv.style.transform = 'translateX(-50%) translateY(-20px)';
-          setTimeout(() => {
-            if (statusDiv.parentNode) {
-              statusDiv.remove();
-            }
-          }, 300);
-        }
-      }, 3000);
-      
-      // 同时输出到控制台
-      console.log(`${type}: ${message}`);
-    }
-
-    // 图片加载错误处理
-    guideImage.addEventListener('error', ()=>{
-      guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">图片加载失败，点击刷新二维码</text></svg>');
-    });
-
-    // 监听localStorage变化，实时更新图片和倒计时
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'imageUrl' || e.key === 'countdownSeconds' || e.key === 'configSaveTime') {
-        if (e.key === 'imageUrl') {
-          setImageSource();
-        }
-        if (e.key === 'countdownSeconds' || e.key === 'configSaveTime') {
-          // 重新初始化倒计时
-          initCountdown();
-        }
-      }
-    });
-    
-    // 监听自定义事件，实时更新图片（同一窗口内的更新）
-    window.addEventListener('imageUrlUpdated', (e) => {
-      console.log('收到图片更新事件:', e.detail);
-      console.log('事件详情:', e);
-      console.log('当前localStorage中的imageUrl:', localStorage.getItem('imageUrl'));
-      setImageSource();
-      showStatus('图片已实时更新！', 'success');
-    });
-    
-    // 监听BroadcastChannel消息（跨窗口同步）
-    if (typeof BroadcastChannel !== 'undefined') {
-      try {
-        const imageChannel = new BroadcastChannel('image-updates');
-        imageChannel.onmessage = (event) => {
-          console.log('收到BroadcastChannel消息:', event.data);
-          if (event.data.type === 'imageUrlUpdated') {
-            console.log('BroadcastChannel: 图片地址已更新:', event.data.imageUrl);
-            setImageSource();
-            showStatus('收到跨窗口图片更新！', 'success');
-          }
-        };
-        console.log('BroadcastChannel监听已启动');
-      } catch (e) {
-        console.log('BroadcastChannel不可用:', e);
-      }
-    }
-    
-    // 监听postMessage消息（跨iframe同步）
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'imageUrlUpdated') {
-        console.log('收到postMessage消息:', event.data);
-        console.log('postMessage: 图片地址已更新:', event.data.imageUrl);
-        setImageSource();
-        showStatus('收到跨iframe图片更新！', 'success');
-      }
-    });
-    
-    // 监听页面配置更新事件
-    window.addEventListener('pageConfigUpdated', (e) => {
-      console.log('收到页面配置更新事件:', e.detail);
-      const config = e.detail;
-      
-      // 更新页面配置
-      document.getElementById('paymentAmount').textContent = config.paymentAmount;
-      document.getElementById('validityPeriod').textContent = config.validityPeriod;
-      document.getElementById('scanHint').textContent = config.scanHint;
-      
-      // 重新初始化倒计时
-      initCountdown();
-      
-      showStatus('页面配置已实时更新！', 'success');
-    });
-    
 
 
-    // 等待DOM完全加载后再初始化
-    function initializeApp() {
-      console.log('开始初始化应用...');
-      
-      // 检查DOM元素是否存在
-      if (!guideImage) {
-        console.error('guideImage 元素未找到');
-        return;
-      }
-      
-      if (!countdown) {
-        console.error('countdown 元素未找到');
-        return;
-      }
-      
-      console.log('DOM元素检查通过，开始初始化...');
-      
-      // 自动跳转功能由 auto-redirect-manager.js 处理
-      
-      // 初始化图片和倒计时
-      setImageSource();
-      initCountdown();
-      
-      // 使用图片同步服务（替代原来的startImageSync）
-      if (window.imageSyncService) {
-        console.log('图片同步服务已就绪');
-        // 手动触发一次检查
-        setTimeout(() => {
-          if (window.imageSyncService.checkForUpdates) {
-            window.imageSyncService.checkForUpdates();
-          }
-        }, 1000);
-      } else {
-        console.log('图片同步服务未加载，使用备用同步方案');
-        startImageSync(); // 备用方案
-      }
-      
-      // 推送用户访问状态
-      pushUserVisitStatus();
-      
-      console.log('应用初始化完成');
-    }
-    
-    // 推送用户访问状态
-    async function pushUserVisitStatus() {
-      const deviceType = getDeviceType();
-      const isWechat = isWechatBrowser();
-      const userIP = await getUserIP();
-      const currentDomain = window.location.hostname;
-      
-      const visitDetails = `IP:${userIP} | 设备:${deviceType} | 微信:${isWechat ? '是' : '否'} | 域名:${currentDomain}`;
-      
-      pushStatus('页面访问', visitDetails);
-    }
-    
-    // 调试图片同步功能
-    function debugImageSync() {
-      console.log('=== 调试图片同步功能 ===');
-      console.log('当前域名:', window.location.origin);
-      console.log('默认图片地址:', IMAGE_CONFIG.defaultImageUrl);
-      console.log('当前图片地址:', IMAGE_CONFIG.currentImageUrl);
-      console.log('备用图片地址:', IMAGE_CONFIG.fallbackUrl);
-      console.log('图片同步服务状态:', window.imageSyncService ? '已加载' : '未加载');
-      
-      if (window.imageSyncService) {
-        console.log('同步服务详情:', {
-          lastImageUrl: window.imageSyncService.lastImageUrl,
-          syncEnabled: window.imageSyncService.syncEnabled,
-          syncIntervalMs: window.imageSyncService.syncIntervalMs
-        });
-      }
-      
-      // 手动刷新图片
-      console.log('手动刷新图片显示...');
-      setImageSource();
-      
-      // 显示当前图片地址信息
-      const currentImageUrl = IMAGE_CONFIG.currentImageUrl || IMAGE_CONFIG.defaultImageUrl;
-      showStatus(`当前图片地址: ${currentImageUrl}`, 'info');
-      
-      console.log('=== 当前配置信息 ===');
-      console.log('IMAGE_CONFIG:', IMAGE_CONFIG);
-    }
-    
-
-    
-    // 确保DOM完全加载后再初始化
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeApp);
-    } else {
-      initializeApp();
-    }
+    // 初始化
+    setImageSource();
+    initCountdown();
   </script>
 </body>
 </html>
