@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        .preview {
+            margin: 20px 0;
+        }
+        .preview img {
+            max-width: 300px;
+            max-height: 300px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>图片上传测试</h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <p>点击选择图片或拖拽图片到此处</p>
+        <input type="file" id="imageFile" accept="image/*" style="display: none;">
+    </div>
+    
+    <div class="preview" id="preview" style="display: none;">
+        <h3>预览</h3>
+        <img id="previewImage" src="" alt="预览">
+        <p>文件名: <span id="fileName"></span></p>
+        <p>文件大小: <span id="fileSize"></span></p>
+        <button onclick="uploadImage()">上传图片</button>
+    </div>
+    
+    <div id="status"></div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageFile = document.getElementById('imageFile');
+        const preview = document.getElementById('preview');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const status = document.getElementById('status');
+        
+        // 点击上传区域
+        uploadArea.addEventListener('click', () => {
+            imageFile.click();
+        });
+        
+        // 文件选择
+        imageFile.addEventListener('change', handleFileSelect);
+        
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#ccc';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                imageFile.files = files;
+                handleFileSelect();
+            }
+        });
+        
+        function handleFileSelect() {
+            const file = imageFile.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                showStatus('请选择图片文件！', 'error');
+                return;
+            }
+            
+            // 检查文件大小（5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                showStatus('图片文件大小不能超过5MB！', 'error');
+                return;
+            }
+            
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                preview.style.display = 'block';
+                showStatus('文件选择成功，可以上传', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function uploadImage() {
+            const file = imageFile.files[0];
+            if (!file) {
+                showStatus('请先选择图片文件！', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            showStatus('正在上传图片...', 'info');
+            
+            fetch('/api/upload-image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    showStatus(`图片上传成功！图片地址: ${data.imageUrl}`, 'success');
+                } else {
+                    showStatus('图片上传失败: ' + (data.error || data.message), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('上传错误:', error);
+                showStatus('图片上传失败，请重试！', 'error');
+            });
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function showStatus(message, type) {
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

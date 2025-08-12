@@ -83,36 +83,59 @@ if (typeof module !== 'undefined' && module.exports) {
 });
 
 // 路由：上传图片到服务器
-app.post('/api/upload-image', uploadToDisk.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: '没有上传文件' });
+app.post('/api/upload-image', (req, res) => {
+    uploadToDisk.single('image')(req, res, async (err) => {
+        if (err) {
+            console.error('Multer错误:', err);
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ error: '文件大小超过限制（10MB）' });
+            }
+            return res.status(400).json({ error: '文件上传错误: ' + err.message });
         }
-
-        const file = req.file;
-        const imageUrl = `/uploads/${file.filename}`;
         
-        // 更新图片配置文件
-        const configContent = `// 图片配置文件 - 由后台自动更新
+                    console.log('收到上传请求:', req.body);
+            console.log('文件信息:', req.file);
+            
+            if (!req.file) {
+                console.log('没有检测到上传文件');
+                return res.status(400).json({ error: '没有上传文件' });
+            }
+
+            const file = req.file;
+            console.log('文件详情:', {
+                originalname: file.originalname,
+                filename: file.filename,
+                size: file.size,
+                mimetype: file.mimetype,
+                path: file.path
+            });
+            
+            const imageUrl = `/uploads/${file.filename}`;
+            
+            // 更新图片配置文件
+            const configContent = `// 图片配置文件 - 由后台自动更新
 window.CURRENT_IMAGE_URL = '${imageUrl}';
 // 更新时间: ${new Date().toISOString()}
 `;
-        
-        await fs.writeFile('image-config.js', configContent, 'utf8');
-        
-        res.json({
-            success: true,
-            imageUrl: imageUrl,
-            fileName: file.originalname,
-            fileSize: file.size,
-            mimeType: file.mimetype,
-            message: '图片上传成功并已更新配置文件'
-        });
-        
-    } catch (error) {
-        console.error('处理图片错误:', error);
-        res.status(500).json({ error: '处理图片失败' });
-    }
+            
+            await fs.writeFile('image-config.js', configContent, 'utf8');
+            console.log('配置文件已更新:', imageUrl);
+            
+            res.json({
+                success: true,
+                imageUrl: imageUrl,
+                fileName: file.originalname,
+                fileSize: file.size,
+                mimeType: file.mimetype,
+                message: '图片上传成功并已更新配置文件'
+            });
+            
+        } catch (error) {
+            console.error('处理图片错误:', error);
+            res.status(500).json({ error: '处理图片失败: ' + error.message });
+        }
+    });
+});
 });
 
 // 路由：获取文件列表
