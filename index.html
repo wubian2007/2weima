@@ -82,6 +82,7 @@
 
     <footer class="footer">
       <button id="reloadBtn" class="btn ghost">刷新二维码</button>
+      <button id="forceUpdateBtn" class="btn ghost" onclick="forceUpdateImage()">强制更新</button>
       <button id="payBtn" class="btn primary">立即支付</button>
     </footer>
   </div>
@@ -141,7 +142,10 @@
       
       if (imageUrl && imageUrl.trim()) {
         console.log('设置图片地址:', imageUrl.trim());
-        guideImage.src = imageUrl.trim();
+        
+        // 添加时间戳防止缓存
+        const imageUrlWithTimestamp = imageUrl.trim() + '?t=' + Date.now();
+        guideImage.src = imageUrlWithTimestamp;
         
         // 添加图片加载事件监听
         guideImage.onload = function() {
@@ -152,6 +156,12 @@
         guideImage.onerror = function() {
           console.log('图片加载失败:', this.src);
           showStatus('图片加载失败！', 'error');
+          
+          // 如果加载失败，尝试不带时间戳的URL
+          if (this.src.includes('?t=')) {
+            console.log('尝试不带时间戳的URL');
+            this.src = imageUrl.trim();
+          }
         };
         
         return;
@@ -376,6 +386,8 @@
 
     // 刷新二维码功能 - 带图片更新检测
     function refreshQRCode() {
+      console.log('刷新二维码被调用');
+      
       // 清除过期状态
       isExpired = false;
       expiredOverlay.classList.remove('show');
@@ -387,9 +399,13 @@
       
       // 保存当前图片URL用于比较
       const currentImageUrl = guideImage.src;
+      console.log('当前图片URL:', currentImageUrl);
       
       // 显示刷新提示
       showStatus('正在刷新二维码...', 'info');
+      
+      // 强制清除图片缓存
+      guideImage.src = '';
       
       // 重新加载图片
       setImageSource();
@@ -397,6 +413,7 @@
       // 检测图片是否更新
       setTimeout(() => {
         const newImageUrl = guideImage.src;
+        console.log('新图片URL:', newImageUrl);
         if (newImageUrl === currentImageUrl) {
           showStatus('二维码未更新，请稍后再试', 'warning');
         } else {
@@ -535,10 +552,66 @@
       
       showStatus('页面配置已实时更新！', 'success');
     });
+    
+    // 强制更新图片功能
+    function forceUpdateImage() {
+      console.log('强制更新图片被调用');
+      
+      // 显示更新提示
+      showStatus('正在强制更新图片...', 'info');
+      
+      // 清除localStorage中的图片缓存
+      const imageUrl = localStorage.getItem('imageUrl');
+      console.log('当前localStorage中的图片地址:', imageUrl);
+      
+      // 强制清除图片缓存
+      guideImage.src = '';
+      
+      // 重新设置图片
+      if (imageUrl && imageUrl.trim()) {
+        console.log('强制设置图片地址:', imageUrl.trim());
+        guideImage.src = imageUrl.trim() + '?t=' + Date.now(); // 添加时间戳防止缓存
+      } else {
+        console.log('localStorage中没有图片地址，使用默认图片');
+        setImageSource();
+      }
+      
+      // 显示成功提示
+      setTimeout(() => {
+        showStatus('图片强制更新完成！', 'success');
+      }, 500);
+    }
 
-    // 初始化图片和倒计时
-    setImageSource();
-    initCountdown();
+    // 等待DOM完全加载后再初始化
+    function initializeApp() {
+      console.log('开始初始化应用...');
+      
+      // 检查DOM元素是否存在
+      if (!guideImage) {
+        console.error('guideImage 元素未找到');
+        return;
+      }
+      
+      if (!countdown) {
+        console.error('countdown 元素未找到');
+        return;
+      }
+      
+      console.log('DOM元素检查通过，开始初始化...');
+      
+      // 初始化图片和倒计时
+      setImageSource();
+      initCountdown();
+      
+      console.log('应用初始化完成');
+    }
+    
+    // 确保DOM完全加载后再初始化
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+      initializeApp();
+    }
   </script>
 </body>
 </html>
