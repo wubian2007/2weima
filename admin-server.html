@@ -997,6 +997,13 @@
             
             currentPage = pageName;
             console.log('切换到页面:', pageName);
+            
+            // 如果切换到图片配置页面，刷新测试显示
+            if (pageName === 'imageConfig') {
+                setTimeout(() => {
+                    refreshTestImage();
+                }, 300);
+            }
         }
 
         // 检查登录状态
@@ -1133,13 +1140,15 @@
                     // 显示成功信息
                     showStatus('图片地址更新成功！前端将自动获取最新图片', 'success');
                     
-                    // 更新测试显示
-                    updateTestDisplay('URL', imageUrl);
-                    
                     // 提示用户
                     setTimeout(() => {
                         alert(`图片地址更新成功！\n\n新的图片地址: ${imageUrl}\n\n前端配置文件已同步更新，请刷新前端页面查看效果。`);
                     }, 1000);
+                    
+                    // 延迟刷新测试显示，确保配置文件已更新
+                    setTimeout(() => {
+                        refreshTestImage();
+                    }, 1500);
                 } else {
                     throw new Error('服务器响应错误');
                 }
@@ -1228,34 +1237,49 @@
         // 测试配置文件
         function testConfigFile() {
             try {
-                // 直接访问配置文件
-                fetch('/image-config.js')
-                    .then(response => response.text())
-                    .then(content => {
-                        console.log('配置文件内容:', content);
+                // 清除缓存，强制重新加载配置文件
+                const timestamp = Date.now();
+                const cacheBuster = `?t=${timestamp}`;
+                
+                // 直接访问配置文件（添加时间戳防止缓存）
+                fetch(`/image-config.js${cacheBuster}`, {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(content => {
+                    console.log('配置文件内容:', content);
+                    
+                    // 提取图片地址和更新时间
+                    const urlMatch = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
+                    const timeMatch = content.match(/\/\/ 更新时间: (.+)/);
+                    
+                    if (urlMatch) {
+                        const configImageUrl = urlMatch[1];
+                        const updateTime = timeMatch ? timeMatch[1] : '未知';
+                        showStatus(`配置文件中的图片地址: ${configImageUrl}`, 'success');
                         
-                        // 提取图片地址和更新时间
-                        const urlMatch = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
-                        const timeMatch = content.match(/\/\/ 更新时间: (.+)/);
-                        
-                        if (urlMatch) {
-                            const configImageUrl = urlMatch[1];
-                            const updateTime = timeMatch ? timeMatch[1] : '未知';
-                            showStatus(`配置文件中的图片地址: ${configImageUrl}`, 'success');
-                            
-                            // 显示配置文件内容
-                            alert(`配置文件内容:\n\n${content}\n\n当前配置的图片地址: ${configImageUrl}\n更新时间: ${updateTime}`);
-                        } else {
-                            showStatus('无法解析配置文件中的图片地址', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('读取配置文件失败:', error);
-                        showStatus('读取配置文件失败！', 'error');
-                    });
+                        // 显示配置文件内容
+                        alert(`配置文件内容:\n\n${content}\n\n当前配置的图片地址: ${configImageUrl}\n更新时间: ${updateTime}`);
+                    } else {
+                        showStatus('无法解析配置文件中的图片地址', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('读取配置文件失败:', error);
+                    showStatus('读取配置文件失败: ' + error.message, 'error');
+                });
             } catch (error) {
                 console.error('测试配置文件失败:', error);
-                showStatus('测试配置文件失败！', 'error');
+                showStatus('测试配置文件失败: ' + error.message, 'error');
             }
         }
         
@@ -1286,39 +1310,63 @@
 
         // 刷新测试图片
         function refreshTestImage() {
-            // 从配置文件加载图片地址
-            fetch('/image-config.js')
-                .then(response => response.text())
-                .then(content => {
-                    const urlMatch = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
-                    const timeMatch = content.match(/\/\/ 更新时间: (.+)/);
+            // 清除缓存，强制重新加载配置文件
+            const timestamp = Date.now();
+            const cacheBuster = `?t=${timestamp}`;
+            
+            // 从配置文件加载图片地址（添加时间戳防止缓存）
+            fetch(`/image-config.js${cacheBuster}`, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(content => {
+                console.log('配置文件内容:', content);
+                
+                const urlMatch = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
+                const timeMatch = content.match(/\/\/ 更新时间: (.+)/);
+                
+                if (urlMatch) {
+                    const imageUrl = urlMatch[1];
+                    const updateTime = timeMatch ? timeMatch[1] : '未知';
                     
-                    if (urlMatch) {
-                        const imageUrl = urlMatch[1];
-                        const updateTime = timeMatch ? timeMatch[1] : '未知';
-                        
-                        // 更新显示信息
-                        document.getElementById('configImageUrl').textContent = imageUrl;
-                        document.getElementById('updateTime').textContent = updateTime;
-                        document.getElementById('configContent').textContent = content.substring(0, 100) + '...';
-                        
-                        // 显示图片
-                        const testImage = document.getElementById('testImage');
-                        testImage.src = imageUrl + '?t=' + Date.now();
-                        testImage.onload = () => {
-                            showStatus('测试图片加载成功！', 'success');
-                        };
-                        testImage.onerror = () => {
-                            showStatus('测试图片加载失败！', 'error');
-                        };
-                    } else {
-                        showStatus('配置文件格式错误！', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('加载配置文件失败:', error);
-                    showStatus('加载配置文件失败！', 'error');
-                });
+                    console.log('解析结果:', { imageUrl, updateTime });
+                    
+                    // 更新显示信息
+                    document.getElementById('configImageUrl').textContent = imageUrl;
+                    document.getElementById('updateTime').textContent = updateTime;
+                    document.getElementById('configContent').textContent = content.substring(0, 100) + '...';
+                    
+                    // 显示图片（添加时间戳防止缓存）
+                    const testImage = document.getElementById('testImage');
+                    const imageTimestamp = Date.now();
+                    testImage.src = imageUrl + '?t=' + imageTimestamp;
+                    
+                    testImage.onload = () => {
+                        console.log('测试图片加载成功:', imageUrl);
+                        showStatus('测试图片加载成功！', 'success');
+                    };
+                    testImage.onerror = () => {
+                        console.error('测试图片加载失败:', imageUrl);
+                        showStatus('测试图片加载失败！', 'error');
+                    };
+                } else {
+                    console.error('配置文件格式错误，无法解析图片地址');
+                    showStatus('配置文件格式错误！', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('加载配置文件失败:', error);
+                showStatus('加载配置文件失败: ' + error.message, 'error');
+            });
         }
 
         // 在新窗口打开测试页面
@@ -1328,7 +1376,10 @@
 
         // 加载当前配置的图片
         function loadCurrentImage() {
-            refreshTestImage();
+            // 延迟一点时间确保页面完全加载后再刷新
+            setTimeout(() => {
+                refreshTestImage();
+            }, 500);
         }
 
         // 域名管理函数
@@ -1641,9 +1692,13 @@
                     // 上传成功后，更新图片地址
                     const imageUrl = data.imageUrl;
                     document.getElementById('imageUrl').value = imageUrl;
-                    updateImageUrl();
                     clearUpload();
                     showStatus('图片上传成功并已更新配置！', 'success');
+                    
+                    // 延迟刷新测试显示，确保配置文件已更新
+                    setTimeout(() => {
+                        refreshTestImage();
+                    }, 1000);
                 } else {
                     showStatus('图片上传失败: ' + data.message, 'error');
                 }
