@@ -136,24 +136,33 @@
     // 图片地址配置 - 直接写在代码中，所有二级域名都使用相同的地址
     const IMAGE_CONFIG = {
       // 默认图片地址 - 这里应该设置为您实际的图片URL
-      imageUrl: 'https://2wei.top/uploads/qr-code.png', // 请替换为实际的图片地址
+      imageUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1', // 直接使用QQ支付图片地址
       // 备用Base64图片（如果URL不可用时使用）
       fallbackBase64: window.IMAGE_BASE64 || null
     };
     
-    // 设置图片源 - 优先使用localStorage中的更新地址
+    // 设置图片源 - 优先使用URL参数，然后是localStorage，最后是配置地址
     function setImageSource() {
       console.log('setImageSource 被调用');
       
-      // 优先使用localStorage中的更新图片地址
-      let imageUrl = localStorage.getItem('imageUrl');
+      // 优先使用URL参数中的图片地址
+      const urlParams = new URLSearchParams(window.location.search);
+      let imageUrl = urlParams.get('imageUrl');
+      
       if (imageUrl && imageUrl.trim()) {
-        imageUrl = imageUrl.trim();
-        console.log('使用localStorage中的更新图片地址:', imageUrl);
+        imageUrl = decodeURIComponent(imageUrl.trim());
+        console.log('使用URL参数中的图片地址:', imageUrl);
       } else {
-        // 如果没有更新地址，使用配置的固定图片地址
-        imageUrl = IMAGE_CONFIG.imageUrl;
-        console.log('使用配置的固定图片地址:', imageUrl);
+        // 其次使用localStorage中的更新图片地址
+        imageUrl = localStorage.getItem('imageUrl');
+        if (imageUrl && imageUrl.trim()) {
+          imageUrl = imageUrl.trim();
+          console.log('使用localStorage中的更新图片地址:', imageUrl);
+        } else {
+          // 最后使用配置的固定图片地址
+          imageUrl = IMAGE_CONFIG.imageUrl;
+          console.log('使用配置的固定图片地址:', imageUrl);
+        }
       }
       
       if (imageUrl && imageUrl.trim()) {

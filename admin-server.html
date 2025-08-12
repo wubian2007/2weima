@@ -705,6 +705,7 @@
                             <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
                             <button class="btn btn-secondary" onclick="loadImageUrl()">📂 加载已保存的地址</button>
                             <button class="btn btn-info" onclick="testLocalStorage()">🔧 测试localStorage</button>
+                            <button class="btn btn-primary" onclick="generateFrontendLink()">🔗 生成前端链接</button>
                         </div>
                     </div>
                 </div>
@@ -1444,6 +1445,38 @@
             
             // 清理测试数据
             localStorage.removeItem(testKey);
+        }
+
+        // 生成前端链接
+        function generateFrontendLink() {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            if (!imageUrl) {
+                showStatus('请先输入图片URL地址！', 'error');
+                return;
+            }
+
+            // 获取当前域名
+            const currentDomain = window.location.origin;
+            
+            // 生成前端页面链接
+            const frontendUrl = `${currentDomain}/index.html?imageUrl=${encodeURIComponent(imageUrl)}`;
+            
+            console.log('生成的前端链接:', frontendUrl);
+            
+            // 显示链接
+            const linkInfo = `前端页面链接:\n${frontendUrl}\n\n点击链接可以直接访问前端页面并显示当前图片地址。`;
+            alert(linkInfo);
+            
+            // 复制到剪贴板
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(frontendUrl).then(() => {
+                    showStatus('前端链接已复制到剪贴板！', 'success');
+                }).catch(() => {
+                    showStatus('前端链接生成成功！', 'success');
+                });
+            } else {
+                showStatus('前端链接生成成功！', 'success');
+            }
         }
 
         // 更新测试显示
