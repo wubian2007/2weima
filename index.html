@@ -139,9 +139,12 @@
     const expiredOverlay = document.getElementById('expiredOverlay');
 
     // 图片地址配置 - 直接写在代码中，所有二级域名都使用相同的地址
+    // 注意：当您上传新图片后，请将下面的imageUrl替换为新的图片地址
     const IMAGE_CONFIG = {
-      // 默认图片地址 - 这里应该设置为您实际的图片URL
-      imageUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1', // 直接使用QQ支付图片地址
+      // 当前使用的图片地址 - 请根据后台上传的图片地址更新此处
+      imageUrl: 'https://2wei.top/uploads/qrcode.jpg', // 请替换为您实际上传的图片地址
+      // 备用图片地址（如果主地址不可用时使用）
+      fallbackUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1',
       // 备用Base64图片（如果URL不可用时使用）
       fallbackBase64: window.IMAGE_BASE64 || null
     };
@@ -228,11 +231,11 @@
     
 
     
-    // 设置图片源 - 优先使用URL参数，然后是localStorage，最后是配置地址
+    // 设置图片源 - 直接使用硬编码的图片地址，确保稳定性
     function setImageSource() {
       console.log('setImageSource 被调用');
       
-      // 优先使用URL参数中的图片地址
+      // 优先使用URL参数中的图片地址（用于测试）
       const urlParams = new URLSearchParams(window.location.search);
       let imageUrl = urlParams.get('imageUrl');
       
@@ -240,24 +243,15 @@
         imageUrl = decodeURIComponent(imageUrl.trim());
         console.log('使用URL参数中的图片地址:', imageUrl);
       } else {
-        // 其次使用localStorage中的更新图片地址
-        imageUrl = localStorage.getItem('imageUrl');
-        if (imageUrl && imageUrl.trim()) {
-          imageUrl = imageUrl.trim();
-          console.log('使用localStorage中的更新图片地址:', imageUrl);
-        } else {
-          // 最后使用配置的固定图片地址
-          imageUrl = IMAGE_CONFIG.imageUrl;
-          console.log('使用配置的固定图片地址:', imageUrl);
-        }
+        // 直接使用硬编码的图片地址，确保所有二级域名都使用相同的地址
+        imageUrl = IMAGE_CONFIG.imageUrl;
+        console.log('使用硬编码的图片地址:', imageUrl);
       }
       
-      // 调试信息：显示所有可能的图片地址
-      console.log('=== 图片地址调试信息 ===');
-      console.log('URL参数中的图片地址:', urlParams.get('imageUrl'));
-      console.log('localStorage中的图片地址:', localStorage.getItem('imageUrl'));
-      console.log('配置的固定图片地址:', IMAGE_CONFIG.imageUrl);
-      console.log('最终选择的图片地址:', imageUrl);
+      // 调试信息：显示图片地址信息
+      console.log('=== 图片地址信息 ===');
+      console.log('硬编码的图片地址:', IMAGE_CONFIG.imageUrl);
+      console.log('最终使用的图片地址:', imageUrl);
       
       if (imageUrl && imageUrl.trim()) {
         console.log('设置图片地址:', imageUrl.trim());
