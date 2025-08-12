@@ -119,7 +119,6 @@ server_ops() {
         
         echo "🔄 重启PM2服务..."
         pm2 delete 2weima-server 2>/dev/null || echo "服务不存在，跳过删除"
-        pm2 delete 2weima-github-api 2>/dev/null || echo "服务不存在，跳过删除"
         pm2 start ecosystem.config.js
         
         echo "💾 保存PM2配置..."

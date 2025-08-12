@@ -319,6 +319,47 @@
             margin-bottom: 5px;
         }
 
+        .mode-selector {
+            margin-bottom: 20px;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .mode-tab {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .mode-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .mode-content {
+            display: none;
+        }
+
+        .mode-content.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -383,9 +424,62 @@
                 <p>✅ 支持多种图片格式</p>
             </div>
 
-            <!-- 图片上传区域 -->
+            <!-- 图片更新模式选择 -->
             <div class="section">
-                <h2>图片上传</h2>
+                <h2>图片更新模式</h2>
+                <div class="mode-selector">
+                    <div class="mode-tabs">
+                        <button class="mode-tab active" onclick="switchMode('base64')">模式1: 图片转Base64</button>
+                        <button class="mode-tab" onclick="switchMode('url')">模式2: 图片地址更新</button>
+                        <button class="mode-tab" onclick="switchMode('upload')">模式3: 上传图片更新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模式1: 图片转Base64 -->
+            <div class="section mode-content" id="base64Mode">
+                <h2>模式1: 图片转Base64</h2>
+                <div class="upload-area" id="base64UploadArea" onclick="document.getElementById('base64FileInput').click()">
+                    <div class="upload-icon">🖼️</div>
+                    <div class="upload-text">点击或拖拽图片转换为Base64</div>
+                    <div class="upload-hint">支持 JPG、PNG、GIF 格式，最大 5MB</div>
+                </div>
+                <input type="file" id="base64FileInput" class="file-input" accept="image/*" onchange="handleBase64FileSelect(event)">
+                
+                <div class="preview-section" id="base64PreviewSection" style="display: none;">
+                    <h3>Base64预览</h3>
+                    <img id="base64PreviewImage" class="preview-image" alt="Base64预览图片">
+                    <div class="button-group">
+                        <button class="btn btn-success" onclick="convertToBase64()">转换为Base64并更新</button>
+                        <button class="btn btn-secondary" onclick="clearBase64Preview()">清除预览</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模式2: 图片地址更新 -->
+            <div class="section mode-content" id="urlMode" style="display: none;">
+                <h2>模式2: 图片地址更新</h2>
+                <div class="config-section">
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="imageUrl">图片URL地址</label>
+                            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                        </div>
+                    </div>
+                    <div class="url-preview" id="urlPreview">
+                        当前图片地址: 未设置
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-success" onclick="updateImageUrl()">更新图片地址</button>
+                        <button class="btn btn-warning" onclick="testImageUrl()">测试图片地址</button>
+                        <button class="btn btn-secondary" onclick="loadImageUrl()">加载已保存的地址</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模式3: 上传图片更新 -->
+            <div class="section mode-content" id="uploadMode" style="display: none;">
+                <h2>模式3: 上传图片更新</h2>
                 <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
                     <div class="upload-icon">📁</div>
                     <div class="upload-text">点击或拖拽图片到此处上传</div>
@@ -401,12 +495,10 @@
                         <button class="btn btn-secondary" onclick="clearPreview()">清除预览</button>
                     </div>
                 </div>
-            </div>
 
-            <!-- 配置区域 -->
-            <div class="section">
-                <h2>图片配置</h2>
-                <div class="config-section">
+                <!-- 服务器配置 -->
+                <div class="config-section" style="margin-top: 30px;">
+                    <h3>服务器配置</h3>
                     <div class="config-grid">
                         <div class="config-item">
                             <label for="serverUrl">服务器地址</label>
@@ -422,7 +514,7 @@
                         </div>
                     </div>
                     
-                    <div class="url-preview" id="urlPreview">
+                    <div class="url-preview" id="uploadUrlPreview">
                         完整URL: http://localhost:3000/uploads/qrcode.jpg
                     </div>
                     
@@ -433,6 +525,8 @@
                     </div>
                 </div>
             </div>
+
+
 
             <!-- 状态消息 -->
             <div class="status-message" id="statusMessage"></div>
@@ -456,6 +550,8 @@
         
         // 当前选中的文件
         let selectedFile = null;
+        let base64SelectedFile = null;
+        let currentMode = 'base64';
 
         // 检查登录状态
         function checkLogin() {
@@ -649,7 +745,10 @@
             
             if (serverUrl && uploadPath && imageName) {
                 const fullUrl = `${serverUrl}${uploadPath}/${imageName}`;
-                document.getElementById('urlPreview').textContent = `完整URL: ${fullUrl}`;
+                const uploadUrlPreview = document.getElementById('uploadUrlPreview');
+                if (uploadUrlPreview) {
+                    uploadUrlPreview.textContent = `完整URL: ${fullUrl}`;
+                }
             }
         }
 
@@ -690,9 +789,152 @@
         document.getElementById('uploadPath').addEventListener('input', updateUrlPreview);
         document.getElementById('imageName').addEventListener('input', updateUrlPreview);
 
+        // 模式切换
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新标签页状态
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新内容显示
+            document.querySelectorAll('.mode-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(mode + 'Mode').classList.add('active');
+            
+            // 加载对应模式的配置
+            loadModeConfig(mode);
+        }
+
+        // 加载模式配置
+        function loadModeConfig(mode) {
+            switch(mode) {
+                case 'base64':
+                    // 加载Base64配置
+                    break;
+                case 'url':
+                    loadImageUrl();
+                    break;
+                case 'upload':
+                    loadConfig();
+                    break;
+            }
+        }
+
+        // Base64文件选择处理
+        function handleBase64FileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showStatus('文件大小不能超过5MB！', 'error');
+                    return;
+                }
+                base64SelectedFile = file;
+                previewBase64File(file);
+            }
+        }
+
+        // 预览Base64文件
+        function previewBase64File(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('base64PreviewImage').src = e.target.result;
+                    document.getElementById('base64PreviewSection').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                showStatus('请选择图片文件！', 'error');
+            }
+        }
+
+        // 清除Base64预览
+        function clearBase64Preview() {
+            base64SelectedFile = null;
+            document.getElementById('base64PreviewSection').style.display = 'none';
+            document.getElementById('base64FileInput').value = '';
+        }
+
+        // 转换为Base64并更新
+        function convertToBase64() {
+            if (!base64SelectedFile) {
+                showStatus('请先选择图片文件！', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                
+                // 保存Base64数据到localStorage
+                localStorage.setItem('imageBase64', base64Data);
+                localStorage.setItem('imageUrl', base64Data);
+                localStorage.setItem('configSaveTime', Date.now().toString());
+                
+                showStatus('Base64转换成功并已更新！', 'success');
+            };
+            reader.readAsDataURL(base64SelectedFile);
+        }
+
+        // 更新图片地址
+        function updateImageUrl() {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            
+            if (!imageUrl) {
+                showStatus('请输入图片URL地址！', 'error');
+                return;
+            }
+
+            // 保存图片URL到localStorage
+            localStorage.setItem('imageUrl', imageUrl);
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            // 更新预览
+            document.getElementById('urlPreview').textContent = `当前图片地址: ${imageUrl}`;
+            
+            showStatus('图片地址更新成功！', 'success');
+        }
+
+        // 测试图片地址
+        function testImageUrl() {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            
+            if (!imageUrl) {
+                showStatus('请先输入图片URL地址！', 'error');
+                return;
+            }
+
+            const testImg = new Image();
+            testImg.onload = function() {
+                showStatus('图片地址测试成功，可以正常访问！', 'success');
+            };
+            testImg.onerror = function() {
+                showStatus('图片地址测试失败，无法访问图片！', 'error');
+            };
+            testImg.src = imageUrl;
+        }
+
+        // 加载图片地址
+        function loadImageUrl() {
+            const imageUrl = localStorage.getItem('imageUrl');
+            if (imageUrl && !imageUrl.startsWith('data:')) {
+                document.getElementById('imageUrl').value = imageUrl;
+                document.getElementById('urlPreview').textContent = `当前图片地址: ${imageUrl}`;
+                showStatus('图片地址加载成功！', 'success');
+            } else {
+                showStatus('没有找到已保存的图片地址', 'info');
+            }
+        }
+
         // 初始化
         checkLogin();
         updateUrlPreview();
+        
+        // 设置默认模式
+        switchMode('base64');
     </script>
 </body>
 </html>
