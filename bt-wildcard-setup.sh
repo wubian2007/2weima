@@ -7,7 +7,7 @@
 SERVER_HOST="119.28.19.237"
 SERVER_USER="root"
 SSH_KEY="~/.ssh/2weima-server"
-DOMAIN="9gtu.com"
+DOMAIN="2wei.top"
 WILDCARD_DOMAIN="*.${DOMAIN}"
 
 # 颜色输出

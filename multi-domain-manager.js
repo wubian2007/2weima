@@ -4,7 +4,7 @@
 class MultiDomainManager {
     constructor() {
             // 域名列表配置 - 使用泛域名生成
-    this.mainDomain = '9gtu.com';
+    this.mainDomain = '2wei.top';
     this.domains = this.generateRandomDomains();
         
         // 当前使用的域名索引
