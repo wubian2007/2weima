@@ -9,7 +9,7 @@ SERVER_USER="root"
 SERVER_PATH="/www/wwwroot/2weima"
 SSH_KEY="~/.ssh/2weima-server"
 NGINX_CONFIG_DIR="/www/server/panel/vhost/nginx"
-NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/9gtu.com.conf"
+NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/2wei.top.conf"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -80,7 +80,7 @@ test_wildcard_domain() {
     
     # 生成测试域名
     TEST_SUBDOMAIN=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head -n 1)
-    TEST_DOMAIN="${TEST_SUBDOMAIN}.9gtu.com"
+    TEST_DOMAIN="${TEST_SUBDOMAIN}.2wei.top"
     
     echo -e "${YELLOW}测试域名: $TEST_DOMAIN${NC}"
     
@@ -117,7 +117,7 @@ show_domain_stats() {
     echo -e "${BLUE}📊 查看域名统计...${NC}"
     
     # 查看Nginx访问日志中的域名统计
-    ssh_cmd "grep -o '[a-z0-9]\{6\}\.9gtu\.com' /www/wwwlogs/9gtu.com.log | sort | uniq -c | sort -nr | head -10"
+    ssh_cmd "grep -o '[a-z0-9]\{6\}\.2wei\.top' /www/wwwlogs/2wei.top.log | sort | uniq -c | sort -nr | head -10"
 }
 
 # 清理过期域名记录

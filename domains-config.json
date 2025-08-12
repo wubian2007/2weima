@@ -1,15 +1,10 @@
 {
   "domains": [
-    "9gtu.com",
-    "2weima.com",
-    "qrcode.pay",
-    "pay.9gtu.com",
-    "qr.2weima.com",
-    "pay.qrcode.com",
-    "wechat.pay.com",
-    "qr.payment.com",
-    "pay.wechat.com",
-    "qrcode.wechat.com"
+    "2wei.top",
+    "pay.2wei.top",
+    "qr.2wei.top",
+    "code.2wei.top",
+    "api.2wei.top"
   ],
   "settings": {
     "checkInterval": 300000,

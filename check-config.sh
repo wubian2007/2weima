@@ -36,8 +36,8 @@ else
     echo -e "  ${GREEN}✅ 服务器IP: $SERVER_IP${NC}"
 fi
 
-if grep -q "DOMAIN=\"9gtu.com\"" bt-sync.sh; then
-    echo -e "  ${GREEN}✅ 域名已配置: 9gtu.com${NC}"
+if grep -q "DOMAIN=\"2wei.top\"" bt-sync.sh; then
+echo -e "  ${GREEN}✅ 域名已配置: 2wei.top${NC}"
 else
     echo -e "  ${RED}❌ 域名未配置${NC}"
 fi

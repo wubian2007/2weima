@@ -19,9 +19,9 @@
 ## 🚀 快速开始
 
 ### 访问地址
-- **主页面**: https://9gtu.com
-- **管理后台**: https://9gtu.com/admin-server.html
-- **导航页面**: https://9gtu.com/nav.html
+- **主页面**: https://2wei.top
+- **管理后台**: https://2wei.top/admin-server.html
+- **导航页面**: https://2wei.top/nav.html
 
 ### 登录信息
 - **用户名**: `admin`
@@ -155,7 +155,7 @@ npm install
 
 ### 服务器配置
 - **服务器地址**: 119.28.19.237
-- **域名**: 9gtu.com
+- **域名**: 2wei.top
 - **网站路径**: /www/wwwroot/2weima
 - **Node.js端口**: 3000
 

@@ -12,7 +12,7 @@
 SERVER_HOST="119.28.19.237"
 SERVER_USER="root"
 SERVER_PATH="/www/wwwroot/2weima"
-DOMAIN="9gtu.com"
+DOMAIN="2wei.top"
 GIT_REPO="https://github.com/wubian2007/2weima.git"
 
 # 颜色输出

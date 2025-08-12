@@ -4,7 +4,7 @@
 class RandomDomainGenerator {
     constructor() {
         // 主域名
-        this.mainDomain = '9gtu.com';
+        this.mainDomain = '2wei.top';
         
         // 随机字符串生成字符集
         this.chars = 'abcdefghijklmnopqrstuvwxyz0123456789';

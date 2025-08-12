@@ -50,13 +50,13 @@ update_code() {
 test_website() {
     echo -e "${BLUE}🌐 测试网站...${NC}"
     echo "测试主页面..."
-    curl -I https://9gtu.com
+    curl -I https://2wei.top
     echo ""
     echo "测试API..."
-    curl -s https://9gtu.com/api/files
+    curl -s https://2wei.top/api/files
     echo ""
     echo "测试管理页面..."
-    curl -I https://9gtu.com/admin-server.html
+    curl -I https://2wei.top/admin-server.html
 }
 
 # 查看Nginx状态
