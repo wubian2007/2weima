@@ -143,26 +143,7 @@
       fallbackBase64: window.IMAGE_BASE64 || null
     };
     
-    // 检测并重定向到主域名（如果当前是随机二级域名）
-    function checkAndRedirectToMainDomain() {
-      const currentHostname = window.location.hostname;
-      const isRandomSubdomain = /^[a-z0-9]{6}\.2wei\.top$/.test(currentHostname);
-      
-      if (isRandomSubdomain) {
-        console.log('检测到随机二级域名，重定向到主域名');
-        const mainDomain = 'https://2wei.top';
-        const currentPath = window.location.pathname + window.location.search;
-        const redirectUrl = mainDomain + currentPath;
-        
-        // 显示重定向提示
-        showStatus('正在跳转到主域名...', 'info');
-        
-        // 延迟重定向，让用户看到提示
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 1000);
-      }
-    }
+
     
     // 设置图片源 - 优先使用URL参数，然后是localStorage，最后是配置地址
     function setImageSource() {
@@ -564,8 +545,7 @@
       
       console.log('DOM元素检查通过，开始初始化...');
       
-      // 检查并重定向到主域名
-      checkAndRedirectToMainDomain();
+      // 自动跳转功能由 auto-redirect-manager.js 处理
       
       // 初始化图片和倒计时
       setImageSource();
