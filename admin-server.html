@@ -55,11 +55,11 @@
 
         .login-section {
             padding: 40px;
-            display: none;
+            display: block;
         }
 
-        .login-section.show {
-            display: block;
+        .login-section.hide {
+            display: none;
         }
 
         .login-form {
@@ -703,7 +703,6 @@
         const loginSection = document.getElementById('loginSection');
         const mainContent = document.getElementById('mainContent');
         const logoutBtn = document.querySelector('.logout-btn');
-        const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewSection = document.getElementById('previewSection');
         const previewImage = document.getElementById('previewImage');
@@ -726,14 +725,14 @@
 
         // 显示登录区域
         function showLoginSection() {
-            loginSection.classList.add('show');
+            loginSection.classList.remove('hide');
             mainContent.classList.remove('show');
             logoutBtn.style.display = 'none';
         }
 
         // 显示主要内容
         function showMainContent() {
-            loginSection.classList.remove('show');
+            loginSection.classList.add('hide');
             mainContent.classList.add('show');
             logoutBtn.style.display = 'block';
             loadConfig();
