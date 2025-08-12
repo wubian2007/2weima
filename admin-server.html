@@ -784,6 +784,7 @@
                             <button class="btn btn-primary" onclick="manualSwitchDomain()">🔄 手动切换域名</button>
                             <button class="btn btn-warning" onclick="checkAllDomains()">🔍 检查所有域名</button>
                             <button class="btn btn-secondary" onclick="resetDomainStatus()">🔄 重置域名状态</button>
+                            <button class="btn btn-info" onclick="testBlockedDetection()">🧪 测试拦截检测</button>
                         </div>
                     </div>
                     
@@ -1405,6 +1406,21 @@
                 multiDomainManager.resetAllDomains();
                 updateDomainStatus();
                 showStatus('域名状态已重置', 'success');
+            } else {
+                showStatus('域名管理器未初始化', 'error');
+            }
+        }
+        
+        function testBlockedDetection() {
+            if (typeof multiDomainManager !== 'undefined') {
+                const isBlocked = multiDomainManager.isWechatBlocked();
+                console.log('拦截检测结果:', isBlocked);
+                
+                if (isBlocked) {
+                    showStatus('检测到微信拦截！', 'error');
+                } else {
+                    showStatus('未检测到微信拦截', 'success');
+                }
             } else {
                 showStatus('域名管理器未初始化', 'error');
             }

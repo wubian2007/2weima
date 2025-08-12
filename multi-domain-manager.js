@@ -73,13 +73,57 @@ class MultiDomainManager {
     
     // 初始化
     init() {
-        // 检查当前域名是否被拦截
-        this.checkCurrentDomain();
+        console.log('多域名管理器初始化...');
+        
+        // 延迟检查当前域名是否被拦截（等待页面完全加载）
+        setTimeout(() => {
+            this.checkCurrentDomain();
+        }, 2000);
+        
+        // 再次检查（防止延迟加载的拦截页面）
+        setTimeout(() => {
+            this.checkCurrentDomain();
+        }, 5000);
         
         // 定期检查域名状态
         setInterval(() => {
             this.checkAllDomains();
         }, 300000); // 每5分钟检查一次
+        
+        // 监听页面变化（检测动态拦截）
+        this.observePageChanges();
+    }
+    
+    // 监听页面变化
+    observePageChanges() {
+        // 监听DOM变化
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    // 页面内容发生变化，检查是否被拦截
+                    setTimeout(() => {
+                        this.checkCurrentDomain();
+                    }, 1000);
+                }
+            });
+        });
+        
+        // 开始监听
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+        
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // 页面重新可见时检查
+                setTimeout(() => {
+                    this.checkCurrentDomain();
+                }, 1000);
+            }
+        });
     }
     
     // 获取当前域名
@@ -126,12 +170,15 @@ class MultiDomainManager {
     // 检查当前域名状态
     checkCurrentDomain() {
         const currentDomain = this.getCurrentDomain();
+        console.log(`检查当前域名: ${currentDomain}`);
         
         // 检查是否被微信拦截
         if (this.isWechatBlocked()) {
+            console.log(`域名 ${currentDomain} 被微信拦截，准备切换...`);
             this.markDomainAsBlocked(currentDomain);
             this.switchToNextDomain();
         } else {
+            console.log(`域名 ${currentDomain} 状态正常`);
             this.markDomainAsAvailable(currentDomain);
         }
     }
@@ -181,10 +228,13 @@ class MultiDomainManager {
         const isWechat = this.detectWechat();
         
         if (!isWechat) {
+            console.log('非微信浏览器，跳过拦截检测');
             return false;
         }
         
-        // 检查页面是否被拦截
+        console.log('检测到微信浏览器，开始拦截检测...');
+        
+        // 检查页面是否被拦截 - 多种检测方式
         const blockedIndicators = [
             '微信安全中心',
             '网页包含恶意内容',
@@ -195,13 +245,93 @@ class MultiDomainManager {
             '网页无法访问',
             '网页已被封禁',
             '网页已被限制',
-            '网页已被拦截'
+            '网页已被拦截',
+            '网页包含风险内容',
+            '网页已被投诉',
+            '网页已被删除',
+            '网页已被下架',
+            '网页已被冻结',
+            '网页存在风险',
+            '网页已被标记',
+            '网页已被警告',
+            '网页已被暂停',
+            '网页已被终止'
         ];
         
+        // 检查页面文本
         const pageText = document.body.innerText.toLowerCase();
-        return blockedIndicators.some(indicator => 
+        const pageHtml = document.body.innerHTML.toLowerCase();
+        const title = document.title.toLowerCase();
+        
+        // 检查页面标题
+        const titleBlocked = blockedIndicators.some(indicator => 
+            title.includes(indicator.toLowerCase())
+        );
+        
+        // 检查页面文本
+        const textBlocked = blockedIndicators.some(indicator => 
             pageText.includes(indicator.toLowerCase())
         );
+        
+        // 检查页面HTML
+        const htmlBlocked = blockedIndicators.some(indicator => 
+            pageHtml.includes(indicator.toLowerCase())
+        );
+        
+        // 检查URL特征
+        const urlBlocked = window.location.href.includes('weixin.qq.com') && 
+                          (window.location.href.includes('safecenter') || 
+                           window.location.href.includes('blocked') ||
+                           window.location.href.includes('warning'));
+        
+        // 检查页面结构特征
+        const structureBlocked = this.checkBlockedPageStructure();
+        
+        const isBlocked = titleBlocked || textBlocked || htmlBlocked || urlBlocked || structureBlocked;
+        
+        if (isBlocked) {
+            console.log('检测到微信拦截！');
+            console.log('标题检测:', titleBlocked);
+            console.log('文本检测:', textBlocked);
+            console.log('HTML检测:', htmlBlocked);
+            console.log('URL检测:', urlBlocked);
+            console.log('结构检测:', structureBlocked);
+        } else {
+            console.log('未检测到微信拦截');
+        }
+        
+        return isBlocked;
+    }
+    
+    // 检查被拦截页面的结构特征
+    checkBlockedPageStructure() {
+        // 检查是否有微信安全中心的特征元素
+        const wechatElements = [
+            'wechat-safecenter',
+            'wechat-warning',
+            'wechat-blocked',
+            'wechat-error',
+            'wechat-security'
+        ];
+        
+        // 检查页面中的class和id
+        const hasWechatElements = wechatElements.some(className => 
+            document.querySelector(`.${className}`) || 
+            document.querySelector(`#${className}`)
+        );
+        
+        // 检查页面是否重定向到微信安全页面
+        const isRedirectedToWechat = window.location.hostname.includes('weixin.qq.com') ||
+                                    window.location.hostname.includes('wechat.com');
+        
+        // 检查页面内容是否被替换
+        const pageContent = document.body.innerText;
+        const isContentReplaced = pageContent.length < 100 && 
+                                 (pageContent.includes('微信') || 
+                                  pageContent.includes('安全') || 
+                                  pageContent.includes('警告'));
+        
+        return hasWechatElements || isRedirectedToWechat || isContentReplaced;
     }
     
     // 检测微信浏览器
