@@ -905,11 +905,41 @@
                             <p><strong>是否主域名:</strong> <span id="isMainDomain">检测中...</span></p>
                             <p><strong>是否随机域名:</strong> <span id="isRandomDomain">检测中...</span></p>
                             <p><strong>跳转状态:</strong> <span id="redirectStatus">检测中...</span></p>
+                            <p><strong>上次跳转时间:</strong> <span id="lastRedirectTime">未知</span></p>
                         </div>
                         <div class="button-group">
                             <button class="btn btn-primary" onclick="manualAutoRedirect()">🔄 手动触发跳转</button>
                             <button class="btn btn-warning" onclick="resetAutoRedirect()">🔄 重置跳转状态</button>
                             <button class="btn btn-info" onclick="testAutoRedirect()">🧪 测试跳转功能</button>
+                            <button class="btn btn-success" onclick="testRandomDomain()">🎲 测试随机域名</button>
+                        </div>
+                    </div>
+                    
+                    <div class="redirect-config">
+                        <h3>跳转配置</h3>
+                        <div class="config-section">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label for="subdomainPrefix">2级域名前缀:</label>
+                                    <input type="text" id="subdomainPrefix" placeholder="abc" value="abc">
+                                </div>
+                                <div class="config-item">
+                                    <label for="subdomainLength">随机字符长度:</label>
+                                    <input type="number" id="subdomainLength" placeholder="6" value="6" min="3" max="10">
+                                </div>
+                                <div class="config-item">
+                                    <label for="redirectDelay">跳转延迟(毫秒):</label>
+                                    <input type="number" id="redirectDelay" placeholder="100" value="100" min="50" max="2000">
+                                </div>
+                                <div class="config-item">
+                                    <label for="redirectInterval">跳转间隔(分钟):</label>
+                                    <input type="number" id="redirectInterval" placeholder="5" value="5" min="1" max="60">
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="saveRedirectConfig()">💾 保存配置</button>
+                                <button class="btn btn-secondary" onclick="resetRedirectConfig()">🔄 重置配置</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1002,6 +1032,13 @@
             if (pageName === 'imageConfig') {
                 setTimeout(() => {
                     refreshTestImage();
+                }, 300);
+            }
+            
+            // 如果切换到自动跳转页面，更新跳转状态
+            if (pageName === 'autoRedirect') {
+                setTimeout(() => {
+                    updateAutoRedirectStatus();
                 }, 300);
             }
         }
@@ -1474,49 +1511,126 @@
         
         // 自动跳转管理函数
         function updateAutoRedirectStatus() {
-            if (typeof autoRedirectManager !== 'undefined') {
-                const status = autoRedirectManager.getStatus();
-                
-                document.getElementById('redirectCurrentDomain').textContent = status.currentDomain;
-                document.getElementById('isMainDomain').textContent = status.isMainDomain ? '是' : '否';
-                document.getElementById('isRandomDomain').textContent = status.isRandomSubdomain ? '是' : '否';
-                document.getElementById('redirectStatus').textContent = status.isRedirected ? '已跳转' : '未跳转';
+            const currentDomain = window.location.hostname;
+            const isMainDomain = currentDomain === '2wei.top';
+            const isRandomDomain = currentDomain.includes('.') && currentDomain !== '2wei.top';
+            const lastRedirectTime = localStorage.getItem('lastRedirectTime');
+            
+            document.getElementById('redirectCurrentDomain').textContent = currentDomain;
+            document.getElementById('isMainDomain').textContent = isMainDomain ? '是' : '否';
+            document.getElementById('isRandomDomain').textContent = isRandomDomain ? '是' : '否';
+            document.getElementById('redirectStatus').textContent = isRandomDomain ? '已跳转' : '未跳转';
+            
+            if (lastRedirectTime) {
+                const time = new Date(parseInt(lastRedirectTime));
+                document.getElementById('lastRedirectTime').textContent = time.toLocaleString();
+            } else {
+                document.getElementById('lastRedirectTime').textContent = '从未跳转';
             }
         }
         
         function manualAutoRedirect() {
-            if (typeof autoRedirectManager !== 'undefined') {
-                autoRedirectManager.manualRedirect();
-                showStatus('正在执行自动跳转...', 'info');
-            } else {
-                showStatus('自动跳转管理器未初始化', 'error');
+            // 生成随机2级域名
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            const prefix = document.getElementById('subdomainPrefix').value || 'abc';
+            const length = parseInt(document.getElementById('subdomainLength').value) || 6;
+            
+            let subdomain = prefix;
+            for (let i = 0; i < length; i++) {
+                subdomain += chars.charAt(Math.floor(Math.random() * chars.length));
             }
+            
+            const randomDomain = subdomain + '.2wei.top';
+            const currentPath = window.location.pathname + window.location.search + window.location.hash;
+            const newUrl = 'https://' + randomDomain + currentPath;
+            
+            console.log('手动跳转到:', newUrl);
+            showStatus('正在跳转到随机2级域名...', 'info');
+            
+            // 记录跳转时间
+            localStorage.setItem('lastRedirectTime', Date.now().toString());
+            
+            // 延迟跳转
+            setTimeout(() => {
+                window.location.href = newUrl;
+            }, 1000);
         }
         
         function resetAutoRedirect() {
-            if (typeof autoRedirectManager !== 'undefined') {
-                autoRedirectManager.resetRedirectStatus();
-                updateAutoRedirectStatus();
-                showStatus('自动跳转状态已重置', 'success');
-            } else {
-                showStatus('自动跳转管理器未初始化', 'error');
-            }
+            localStorage.removeItem('lastRedirectTime');
+            updateAutoRedirectStatus();
+            showStatus('自动跳转状态已重置', 'success');
         }
         
         function testAutoRedirect() {
-            if (typeof autoRedirectManager !== 'undefined') {
-                const status = autoRedirectManager.getStatus();
-                console.log('自动跳转状态:', status);
-                
-                if (status.isMainDomain) {
-                    showStatus('当前是主域名，可以触发跳转', 'info');
-                } else if (status.isRandomSubdomain) {
-                    showStatus('当前是随机域名，无需跳转', 'success');
-                } else {
-                    showStatus('当前域名状态异常', 'warning');
-                }
+            const currentDomain = window.location.hostname;
+            const isMainDomain = currentDomain === '2wei.top';
+            const isRandomDomain = currentDomain.includes('.') && currentDomain !== '2wei.top';
+            
+            if (isMainDomain) {
+                showStatus('当前是主域名，可以触发跳转', 'info');
+            } else if (isRandomDomain) {
+                showStatus('当前是随机域名，无需跳转', 'success');
             } else {
-                showStatus('自动跳转管理器未初始化', 'error');
+                showStatus('当前域名状态异常', 'warning');
+            }
+        }
+        
+        function testRandomDomain() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            const prefix = document.getElementById('subdomainPrefix').value || 'abc';
+            const length = parseInt(document.getElementById('subdomainLength').value) || 6;
+            
+            let subdomain = prefix;
+            for (let i = 0; i < length; i++) {
+                subdomain += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            
+            const randomDomain = subdomain + '.2wei.top';
+            showStatus(`测试随机域名: ${randomDomain}`, 'info');
+            
+            // 在新窗口打开测试
+            const testUrl = 'https://' + randomDomain + '/index.html';
+            window.open(testUrl, '_blank');
+        }
+        
+        function saveRedirectConfig() {
+            const config = {
+                subdomainPrefix: document.getElementById('subdomainPrefix').value,
+                subdomainLength: parseInt(document.getElementById('subdomainLength').value),
+                redirectDelay: parseInt(document.getElementById('redirectDelay').value),
+                redirectInterval: parseInt(document.getElementById('redirectInterval').value)
+            };
+            
+            localStorage.setItem('redirectConfig', JSON.stringify(config));
+            showStatus('跳转配置已保存！', 'success');
+        }
+        
+        function resetRedirectConfig() {
+            const defaultConfig = {
+                subdomainPrefix: 'abc',
+                subdomainLength: 6,
+                redirectDelay: 100,
+                redirectInterval: 5
+            };
+            
+            document.getElementById('subdomainPrefix').value = defaultConfig.subdomainPrefix;
+            document.getElementById('subdomainLength').value = defaultConfig.subdomainLength;
+            document.getElementById('redirectDelay').value = defaultConfig.redirectDelay;
+            document.getElementById('redirectInterval').value = defaultConfig.redirectInterval;
+            
+            localStorage.removeItem('redirectConfig');
+            showStatus('跳转配置已重置为默认值！', 'success');
+        }
+        
+        function loadRedirectConfig() {
+            const savedConfig = localStorage.getItem('redirectConfig');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                document.getElementById('subdomainPrefix').value = config.subdomainPrefix || 'abc';
+                document.getElementById('subdomainLength').value = config.subdomainLength || 6;
+                document.getElementById('redirectDelay').value = config.redirectDelay || 100;
+                document.getElementById('redirectInterval').value = config.redirectInterval || 5;
             }
         }
         
@@ -1793,6 +1907,9 @@
         
         // 加载页面配置
         loadPageConfig();
+        
+        // 加载跳转配置
+        loadRedirectConfig();
         
         // 更新域名状态
         setTimeout(() => {
