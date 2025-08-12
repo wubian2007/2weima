@@ -778,6 +778,7 @@
                                 <button class="btn btn-secondary" onclick="loadImageUrl()">📂 加载已保存的地址</button>
                                 <button class="btn btn-info" onclick="testLocalStorage()">🔧 测试localStorage</button>
                                 <button class="btn btn-primary" onclick="generateFrontendLink()">🔗 生成前端链接</button>
+                                <button class="btn btn-danger" onclick="testImageSync()">🧪 测试图片同步</button>
                             </div>
                         </div>
                     </div>
@@ -1489,6 +1490,10 @@
                 console.log('自动补全主域名后的图片地址:', imageUrl);
             }
 
+            // 先保存到localStorage
+            localStorage.setItem('imageUrl', imageUrl);
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            
             // 强制更新图片地址
             forceUpdateImageUrl(imageUrl);
             
@@ -1546,6 +1551,33 @@
             } else {
                 showStatus('没有找到已保存的图片地址', 'info');
             }
+        }
+
+        // 测试图片同步功能
+        function testImageSync() {
+            console.log('=== 测试图片同步功能 ===');
+            
+            // 设置一个测试图片地址
+            const testImageUrl = 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=' + Date.now() + '&orig=1';
+            
+            console.log('测试图片地址:', testImageUrl);
+            
+            // 保存到localStorage
+            localStorage.setItem('imageUrl', testImageUrl);
+            localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            // 强制更新
+            forceUpdateImageUrl(testImageUrl);
+            
+            // 更新预览
+            document.getElementById('urlPreview').textContent = `测试图片地址: ${testImageUrl}`;
+            
+            showStatus('测试图片同步已触发！', 'success');
+            
+            // 更新测试显示
+            updateTestDisplay('测试同步', testImageUrl);
+            
+            console.log('图片同步测试完成，请检查前端页面是否更新');
         }
 
         // 测试localStorage功能

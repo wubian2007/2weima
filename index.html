@@ -87,6 +87,7 @@
     <footer class="footer">
       <button id="reloadBtn" class="btn ghost">刷新二维码</button>
       <button id="payBtn" class="btn primary">长按图片识别支付</button>
+      <button id="debugBtn" class="btn" style="background: #dc3545; color: white;" onclick="debugImageSync()">🧪 调试同步</button>
     </footer>
   </div>
 
@@ -642,6 +643,7 @@
     window.addEventListener('imageUrlUpdated', (e) => {
       console.log('收到图片更新事件:', e.detail);
       console.log('事件详情:', e);
+      console.log('当前localStorage中的imageUrl:', localStorage.getItem('imageUrl'));
       setImageSource();
       showStatus('图片已实时更新！', 'success');
     });
@@ -718,6 +720,12 @@
       // 使用图片同步服务（替代原来的startImageSync）
       if (window.imageSyncService) {
         console.log('图片同步服务已就绪');
+        // 手动触发一次检查
+        setTimeout(() => {
+          if (window.imageSyncService.checkForUpdates) {
+            window.imageSyncService.checkForUpdates();
+          }
+        }, 1000);
       } else {
         console.log('图片同步服务未加载，使用备用同步方案');
         startImageSync(); // 备用方案
@@ -739,6 +747,35 @@
       const visitDetails = `IP:${userIP} | 设备:${deviceType} | 微信:${isWechat ? '是' : '否'} | 域名:${currentDomain}`;
       
       pushStatus('页面访问', visitDetails);
+    }
+    
+    // 调试图片同步功能
+    function debugImageSync() {
+      console.log('=== 调试图片同步功能 ===');
+      console.log('当前域名:', window.location.origin);
+      console.log('localStorage中的imageUrl:', localStorage.getItem('imageUrl'));
+      console.log('localStorage中的configSaveTime:', localStorage.getItem('configSaveTime'));
+      console.log('图片同步服务状态:', window.imageSyncService ? '已加载' : '未加载');
+      
+      if (window.imageSyncService) {
+        console.log('同步服务详情:', {
+          lastImageUrl: window.imageSyncService.lastImageUrl,
+          syncEnabled: window.imageSyncService.syncEnabled,
+          syncIntervalMs: window.imageSyncService.syncIntervalMs
+        });
+        
+        // 手动触发检查
+        if (window.imageSyncService.checkForUpdates) {
+          console.log('手动触发同步检查...');
+          window.imageSyncService.checkForUpdates();
+        }
+      }
+      
+      // 手动刷新图片
+      console.log('手动刷新图片显示...');
+      setImageSource();
+      
+      showStatus('调试信息已输出到控制台', 'info');
     }
     
 
