@@ -132,20 +132,42 @@
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
 
-    // 设置图片源
+    // 设置图片源 - 直接显示最后提交的图片地址
     function setImageSource() {
       console.log('setImageSource 被调用');
       
-      // 优先使用后台配置的图片地址
+      // 获取最后提交的图片地址（可能是URL、本地上传地址或Base64）
       const imageUrl = localStorage.getItem('imageUrl');
-      console.log('从localStorage获取的imageUrl:', imageUrl);
+      console.log('从localStorage获取的最后提交的图片地址:', imageUrl);
       
       if (imageUrl && imageUrl.trim()) {
-        console.log('设置图片地址:', imageUrl.trim());
+        console.log('设置最后提交的图片地址:', imageUrl.trim());
         
-        // 添加时间戳防止缓存
-        const imageUrlWithTimestamp = imageUrl.trim() + '?t=' + Date.now();
-        guideImage.src = imageUrlWithTimestamp;
+        // 判断图片地址类型
+        const imageUrlTrimmed = imageUrl.trim();
+        let finalImageUrl = imageUrlTrimmed;
+        
+        if (imageUrlTrimmed.startsWith('data:')) {
+          // Base64图片，直接使用
+          console.log('检测到Base64图片地址');
+          finalImageUrl = imageUrlTrimmed;
+        } else if (imageUrlTrimmed.startsWith('http')) {
+          // HTTP/HTTPS URL，添加时间戳防止缓存
+          console.log('检测到HTTP URL图片地址');
+          finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
+        } else if (imageUrlTrimmed.startsWith('/')) {
+          // 相对路径，添加当前域名和时间戳
+          console.log('检测到相对路径图片地址');
+          const currentDomain = window.location.origin;
+          finalImageUrl = currentDomain + imageUrlTrimmed + '?t=' + Date.now();
+        } else {
+          // 其他情况，直接使用
+          console.log('使用原始图片地址');
+          finalImageUrl = imageUrlTrimmed;
+        }
+        
+        console.log('最终图片地址:', finalImageUrl);
+        guideImage.src = finalImageUrl;
         
         // 添加图片加载事件监听
         guideImage.onload = function() {
@@ -157,24 +179,25 @@
           console.log('图片加载失败:', this.src);
           showStatus('图片加载失败！', 'error');
           
-          // 如果加载失败，尝试不带时间戳的URL
-          if (this.src.includes('?t=')) {
+          // 如果加载失败且是带时间戳的URL，尝试不带时间戳
+          if (this.src.includes('?t=') && !this.src.startsWith('data:')) {
             console.log('尝试不带时间戳的URL');
-            this.src = imageUrl.trim();
+            const originalUrl = this.src.split('?t=')[0];
+            this.src = originalUrl;
           }
         };
         
         return;
       }
 
-      // 如果没有配置图片地址，使用base64图片
+      // 如果没有配置图片地址，使用默认Base64图片
       if (window.IMAGE_BASE64) {
-        console.log('使用Base64图片');
+        console.log('使用默认Base64图片');
         guideImage.src = window.IMAGE_BASE64;
       } else {
-        // 如果base64文件加载失败，使用备用图片
+        // 如果连默认Base64都没有，使用备用图片
         console.log('使用备用图片');
-        guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">图片加载失败，点击刷新二维码</text></svg>');
+        guideImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect fill="#222" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="20">暂无图片，请先在后台配置图片</text></svg>');
       }
     }
     
@@ -407,14 +430,19 @@
       // 强制清除图片缓存
       guideImage.src = '';
       
-      // 重新加载图片
+      // 重新加载最后提交的图片
       setImageSource();
       
       // 检测图片是否更新
       setTimeout(() => {
         const newImageUrl = guideImage.src;
         console.log('新图片URL:', newImageUrl);
-        if (newImageUrl === currentImageUrl) {
+        
+        // 比较图片地址（忽略时间戳）
+        const currentUrlWithoutTimestamp = currentImageUrl.split('?t=')[0];
+        const newUrlWithoutTimestamp = newImageUrl.split('?t=')[0];
+        
+        if (newUrlWithoutTimestamp === currentUrlWithoutTimestamp) {
           showStatus('二维码未更新，请稍后再试', 'warning');
         } else {
           showStatus('二维码已更新！', 'success');
@@ -560,7 +588,7 @@
       // 显示更新提示
       showStatus('正在强制更新图片...', 'info');
       
-      // 清除localStorage中的图片缓存
+      // 获取最后提交的图片地址
       const imageUrl = localStorage.getItem('imageUrl');
       console.log('当前localStorage中的图片地址:', imageUrl);
       
@@ -569,8 +597,29 @@
       
       // 重新设置图片
       if (imageUrl && imageUrl.trim()) {
-        console.log('强制设置图片地址:', imageUrl.trim());
-        guideImage.src = imageUrl.trim() + '?t=' + Date.now(); // 添加时间戳防止缓存
+        console.log('强制设置最后提交的图片地址:', imageUrl.trim());
+        
+        // 使用与setImageSource相同的逻辑
+        const imageUrlTrimmed = imageUrl.trim();
+        let finalImageUrl = imageUrlTrimmed;
+        
+        if (imageUrlTrimmed.startsWith('data:')) {
+          // Base64图片，直接使用
+          finalImageUrl = imageUrlTrimmed;
+        } else if (imageUrlTrimmed.startsWith('http')) {
+          // HTTP/HTTPS URL，添加时间戳防止缓存
+          finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
+        } else if (imageUrlTrimmed.startsWith('/')) {
+          // 相对路径，添加当前域名和时间戳
+          const currentDomain = window.location.origin;
+          finalImageUrl = currentDomain + imageUrlTrimmed + '?t=' + Date.now();
+        } else {
+          // 其他情况，直接使用
+          finalImageUrl = imageUrlTrimmed;
+        }
+        
+        console.log('强制更新最终图片地址:', finalImageUrl);
+        guideImage.src = finalImageUrl;
       } else {
         console.log('localStorage中没有图片地址，使用默认图片');
         setImageSource();
