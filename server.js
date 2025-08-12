@@ -148,63 +148,72 @@ app.post('/upload', uploadToDisk.single('image'), async (req, res) => {
     }
 });
 
-// 路由：获取图片状态信息
-app.get('/api/image-status', async (req, res) => {
+// 存储当前图片地址的文件
+const IMAGE_URL_FILE = path.join(__dirname, 'current-image-url.json');
+
+// 路由：获取当前图片地址
+app.get('/api/current-image-url', async (req, res) => {
     try {
-        // 读取uploads目录中的最新图片
-        const uploadsDir = path.join(__dirname, 'uploads');
-        
+        // 读取当前图片地址
         try {
-            const files = await fs.readdir(uploadsDir);
-            const imageFiles = files.filter(file => 
-                /\.(jpg|jpeg|png|gif|webp)$/i.test(file)
-            );
+            const data = await fs.readFile(IMAGE_URL_FILE, 'utf8');
+            const imageData = JSON.parse(data);
             
-            if (imageFiles.length > 0) {
-                // 按修改时间排序，获取最新的图片
-                const fileStats = await Promise.all(
-                    imageFiles.map(async (file) => {
-                        const filePath = path.join(uploadsDir, file);
-                        const stats = await fs.stat(filePath);
-                        return { file, stats };
-                    })
-                );
-                
-                fileStats.sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
-                const latestImage = fileStats[0].file;
-                const imageUrl = `/uploads/${latestImage}`;
-                
-                res.json({
-                    success: true,
-                    imageUrl: imageUrl,
-                    fileName: latestImage,
-                    lastModified: fileStats[0].stats.mtime.toISOString(),
-                    totalImages: imageFiles.length
-                });
-            } else {
-                // 没有图片文件，返回默认状态
-                res.json({
-                    success: true,
-                    imageUrl: null,
-                    message: '没有找到图片文件',
-                    totalImages: 0
-                });
-            }
-        } catch (error) {
-            // uploads目录不存在，返回默认状态
             res.json({
                 success: true,
-                imageUrl: null,
-                message: 'uploads目录不存在',
-                totalImages: 0
+                imageUrl: imageData.imageUrl,
+                updatedAt: imageData.updatedAt
+            });
+        } catch (error) {
+            // 文件不存在，返回默认地址
+            res.json({
+                success: true,
+                imageUrl: '/uploads/qrcode.jpg',
+                updatedAt: null
             });
         }
         
     } catch (error) {
-        console.error('获取图片状态错误:', error);
+        console.error('获取当前图片地址错误:', error);
         res.status(500).json({ 
             success: false,
-            error: '获取图片状态失败' 
+            error: '获取当前图片地址失败' 
+        });
+    }
+});
+
+// 路由：更新当前图片地址
+app.post('/api/update-image-url', async (req, res) => {
+    try {
+        const { imageUrl } = req.body;
+        
+        if (!imageUrl || !imageUrl.trim()) {
+            return res.status(400).json({ 
+                success: false,
+                error: '缺少图片地址' 
+            });
+        }
+
+        // 保存图片地址到文件
+        const imageData = {
+            imageUrl: imageUrl.trim(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        await fs.writeFile(IMAGE_URL_FILE, JSON.stringify(imageData, null, 2), 'utf8');
+        
+        res.json({
+            success: true,
+            message: '图片地址更新成功',
+            imageUrl: imageData.imageUrl,
+            updatedAt: imageData.updatedAt
+        });
+        
+    } catch (error) {
+        console.error('更新图片地址错误:', error);
+        res.status(500).json({ 
+            success: false,
+            error: '更新图片地址失败' 
         });
     }
 });

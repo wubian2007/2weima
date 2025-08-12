@@ -138,17 +138,17 @@
     const countdownText = document.getElementById('countdownText');
     const expiredOverlay = document.getElementById('expiredOverlay');
 
-    // 图片地址配置 - 支持从服务器动态获取最新图片地址
+    // 图片地址配置 - 从服务器获取最新图片地址
     const IMAGE_CONFIG = {
+      // 服务器图片地址API
+      imageUrlApi: 'https://2wei.top/api/current-image-url',
       // 默认图片地址（当无法从服务器获取时使用）
       defaultImageUrl: 'https://2wei.top/uploads/qrcode.jpg',
-      // 服务器图片状态API
-      statusApi: 'https://2wei.top/api/image-status',
       // 备用图片地址（如果主地址不可用时使用）
       fallbackUrl: 'https://pay.qq.com/cgi-bin/account/get_qr_image.cgi?size=120&url=weixin%3A%2F%2Fwxpay%2Fbizpayurl%3Fpr%3DAX4nyKQz1&t=1754972239382&orig=1',
       // 备用Base64图片（如果URL不可用时使用）
       fallbackBase64: window.IMAGE_BASE64 || null,
-      // 当前使用的图片地址（动态更新）
+      // 当前使用的图片地址
       currentImageUrl: null
     };
     
@@ -234,7 +234,7 @@
     
 
     
-    // 设置图片源 - 优先从服务器获取最新图片地址
+    // 设置图片源 - 从服务器获取当前图片地址
     async function setImageSource() {
       console.log('setImageSource 被调用');
       
@@ -249,17 +249,17 @@
         return;
       }
       
-      // 尝试从服务器获取最新图片地址
+      // 从服务器获取当前图片地址
       try {
-        console.log('尝试从服务器获取最新图片地址...');
-        const response = await fetch(IMAGE_CONFIG.statusApi);
+        console.log('从服务器获取当前图片地址...');
+        const response = await fetch(IMAGE_CONFIG.imageUrlApi);
         
         if (response.ok) {
           const data = await response.json();
           if (data.imageUrl && data.imageUrl.trim()) {
             imageUrl = data.imageUrl.trim();
             IMAGE_CONFIG.currentImageUrl = imageUrl;
-            console.log('从服务器获取到最新图片地址:', imageUrl);
+            console.log('从服务器获取到当前图片地址:', imageUrl);
             setImageToElement(imageUrl);
             return;
           }
