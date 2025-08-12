@@ -764,7 +764,8 @@
                                 <button class="btn btn-success" onclick="updateImageUrl()">💾 更新图片地址</button>
                                 <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
                                 <button class="btn btn-info" onclick="loadCurrentImageUrl()">📂 加载当前地址</button>
-                                <button class="btn btn-primary" onclick="testFrontendDisplay()">👁️ 测试前端显示</button>
+                                                                 <button class="btn btn-primary" onclick="testFrontendDisplay()">👁️ 测试前端显示</button>
+                                 <button class="btn btn-secondary" onclick="testConfigFile()">📄 测试配置文件</button>
                             </div>
                         </div>
                     </div>
@@ -1036,7 +1037,7 @@
                     
                     // 提示用户
                     setTimeout(() => {
-                        alert(`图片地址更新成功！\n\n新的图片地址: ${imageUrl}\n\n前端页面会自动从服务器获取最新图片地址。\n\n如果前端没有立即更新，请刷新页面。`);
+                        alert(`图片地址更新成功！\n\n新的图片地址: ${imageUrl}\n\n前端配置文件已同步更新，请刷新前端页面查看效果。`);
                     }, 1000);
                 } else {
                     throw new Error('服务器响应错误');
@@ -1121,6 +1122,37 @@
             window.open(testUrl, '_blank');
             
             showStatus('已在新窗口打开测试页面！', 'success');
+        }
+
+        // 测试配置文件
+        function testConfigFile() {
+            try {
+                // 直接访问配置文件
+                fetch('/image-config.js')
+                    .then(response => response.text())
+                    .then(content => {
+                        console.log('配置文件内容:', content);
+                        
+                        // 提取图片地址
+                        const match = content.match(/window\.CURRENT_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/);
+                        if (match) {
+                            const configImageUrl = match[1];
+                            showStatus(`配置文件中的图片地址: ${configImageUrl}`, 'success');
+                            
+                            // 显示配置文件内容
+                            alert(`配置文件内容:\n\n${content}\n\n当前配置的图片地址: ${configImageUrl}`);
+                        } else {
+                            showStatus('无法解析配置文件中的图片地址', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('读取配置文件失败:', error);
+                        showStatus('读取配置文件失败！', 'error');
+                    });
+            } catch (error) {
+                console.error('测试配置文件失败:', error);
+                showStatus('测试配置文件失败！', 'error');
+            }
         }
         
 

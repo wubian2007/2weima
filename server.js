@@ -194,17 +194,23 @@ app.post('/api/update-image-url', async (req, res) => {
             });
         }
 
-        // 保存图片地址到文件
+        const imageUrlTrimmed = imageUrl.trim();
+        
+        // 保存图片地址到JSON文件
         const imageData = {
-            imageUrl: imageUrl.trim(),
+            imageUrl: imageUrlTrimmed,
             updatedAt: new Date().toISOString()
         };
         
         await fs.writeFile(IMAGE_URL_FILE, JSON.stringify(imageData, null, 2), 'utf8');
         
+        // 同时更新image-config.js文件
+        const configContent = `// 图片配置文件 - 由后台自动更新\nwindow.CURRENT_IMAGE_URL = '${imageUrlTrimmed}';\n`;
+        await fs.writeFile(path.join(__dirname, 'image-config.js'), configContent, 'utf8');
+        
         res.json({
             success: true,
-            message: '图片地址更新成功',
+            message: '图片地址更新成功，前端配置文件已同步更新',
             imageUrl: imageData.imageUrl,
             updatedAt: imageData.updatedAt
         });

@@ -91,7 +91,8 @@
     </footer>
   </div>
 
-
+  <!-- 引入图片配置文件 -->
+  <script src="image-config.js"></script>
 
   <script>
     // 倒计时配置
@@ -117,8 +118,12 @@
         return;
       }
       
-      // 使用默认图片地址
-      guideImage.src = '/uploads/qrcode.jpg';
+      // 使用配置文件中的图片地址
+      if (window.CURRENT_IMAGE_URL) {
+        guideImage.src = window.CURRENT_IMAGE_URL;
+      } else {
+        guideImage.src = '/uploads/qrcode.jpg';
+      }
     }
 
     // 倒计时相关变量
