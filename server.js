@@ -93,7 +93,8 @@ app.post('/api/upload-image', (req, res) => {
             return res.status(400).json({ error: '文件上传错误: ' + err.message });
         }
         
-                    console.log('收到上传请求:', req.body);
+        try {
+            console.log('收到上传请求:', req.body);
             console.log('文件信息:', req.file);
             
             if (!req.file) {
@@ -135,7 +136,6 @@ window.CURRENT_IMAGE_URL = '${imageUrl}';
             res.status(500).json({ error: '处理图片失败: ' + error.message });
         }
     });
-});
 });
 
 // 路由：获取文件列表
