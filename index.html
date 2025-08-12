@@ -19,7 +19,7 @@
 
     /* 图片区域 - 移除边框，全屏显示 */
     .hero{flex:1;display:flex;align-items:center;justify-content:center;padding:0;position:relative}
-    .guide-img{width:100%;height:100%;object-fit:contain;display:block}
+    .guide-img{width:100%;height:100%;object-fit:contain;display:block;background:#07c160;border-radius:10px}
 
     /* 倒计时器 - 移到图片上方 */
     .countdown{position:absolute;top:20px;right:20px;background:rgba(255,0,0,0.8);color:#fff;padding:8px 16px;border-radius:20px;font-size:16px;font-weight:600;z-index:100}
@@ -82,8 +82,6 @@
 
     <footer class="footer">
       <button id="reloadBtn" class="btn ghost">刷新二维码</button>
-      <button id="forceUpdateBtn" class="btn ghost" onclick="forceUpdateImage()">强制更新</button>
-      <button id="debugBtn" class="btn ghost" onclick="debugImageUrl()">调试地址</button>
       <button id="payBtn" class="btn primary">立即支付</button>
     </footer>
   </div>
@@ -229,128 +227,8 @@
       }
     }
     
-    // 长按图片功能
-    let longPressTimer = null;
-    let isLongPressed = false;
+
     
-    function startLongPress() {
-      if (longPressTimer) return;
-      
-      longPressTimer = setTimeout(() => {
-        isLongPressed = true;
-        showLongPressMenu();
-      }, 3000); // 3秒长按
-    }
-    
-    function cancelLongPress() {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-      isLongPressed = false;
-    }
-    
-    function showLongPressMenu() {
-      // 创建微信风格的长按菜单
-      const menu = document.createElement('div');
-      menu.id = 'longPressMenu';
-      menu.innerHTML = `
-        <div style="
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          z-index: 1000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <div style="
-            background: #333;
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 300px;
-            width: 90%;
-          ">
-            <div style="
-              color: #fff;
-              text-align: center;
-              font-size: 18px;
-              margin-bottom: 20px;
-            ">选择操作</div>
-            <div style="
-              display: flex;
-              flex-direction: column;
-              gap: 10px;
-            ">
-              <button onclick="saveImage()" style="
-                background: #007aff;
-                color: #fff;
-                border: none;
-                padding: 12px;
-                border-radius: 8px;
-                font-size: 16px;
-              ">保存图片</button>
-              <button onclick="copyImageUrl()" style="
-                background: #007aff;
-                color: #fff;
-                border: none;
-                padding: 12px;
-                border-radius: 8px;
-                font-size: 16px;
-              ">复制图片链接</button>
-              <button onclick="closeLongPressMenu()" style="
-                background: #666;
-                color: #fff;
-                border: none;
-                padding: 12px;
-                border-radius: 8px;
-                font-size: 16px;
-              ">取消</button>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(menu);
-    }
-    
-    function closeLongPressMenu() {
-      const menu = document.getElementById('longPressMenu');
-      if (menu) {
-        menu.remove();
-      }
-      cancelLongPress();
-    }
-    
-    function saveImage() {
-      // 创建下载链接
-      const link = document.createElement('a');
-      link.href = guideImage.src;
-      link.download = 'payment-qr.png';
-      link.click();
-      closeLongPressMenu();
-    }
-    
-    function copyImageUrl() {
-      // 复制图片URL到剪贴板
-      navigator.clipboard.writeText(guideImage.src).then(() => {
-        alert('图片链接已复制到剪贴板');
-      }).catch(() => {
-        alert('复制失败，请手动复制');
-      });
-      closeLongPressMenu();
-    }
-    
-    // 绑定长按事件
-    guideImage.addEventListener('mousedown', startLongPress);
-    guideImage.addEventListener('mouseup', cancelLongPress);
-    guideImage.addEventListener('mouseleave', cancelLongPress);
-    guideImage.addEventListener('touchstart', startLongPress);
-    guideImage.addEventListener('touchend', cancelLongPress);
-    guideImage.addEventListener('touchcancel', cancelLongPress);
 
     // 倒计时相关变量
     let countdownTimer = null;
@@ -481,16 +359,62 @@
       initCountdown();
     }
 
-    // 支付按钮点击事件 - 自动执行长按操作
+    // 支付按钮点击事件 - 直接触发微信长按识别
     function handlePayClick() {
       if (isExpired) {
         alert('二维码已过期，请刷新二维码');
         return;
       }
       
-      // 自动执行长按操作
-      console.log('立即支付按钮被点击，执行长按操作...');
-      startLongPress();
+      console.log('立即支付按钮被点击，触发微信长按识别...');
+      
+      // 检查是否在微信环境中
+      const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+      
+      if (isWechat) {
+        // 在微信中，直接触发图片的长按识别
+        console.log('检测到微信环境，触发长按识别');
+        
+        // 创建长按事件
+        const longPressEvent = new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          button: 0,
+          buttons: 1
+        });
+        
+        // 触发图片的长按事件
+        guideImage.dispatchEvent(longPressEvent);
+        
+        // 显示提示
+        showStatus('正在唤醒微信支付识别...', 'success');
+        
+        // 模拟长按持续时间
+        setTimeout(() => {
+          const mouseUpEvent = new MouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            button: 0,
+            buttons: 0
+          });
+          guideImage.dispatchEvent(mouseUpEvent);
+        }, 1000);
+        
+      } else {
+        // 非微信环境，显示提示
+        console.log('非微信环境，显示提示');
+        showStatus('请在微信中打开此页面进行支付', 'warning');
+        
+        // 尝试打开微信
+        setTimeout(() => {
+          if (confirm('是否要打开微信？')) {
+            // 尝试打开微信（iOS和Android的微信URL scheme）
+            window.location.href = 'weixin://';
+          }
+        }, 1000);
+      }
     }
 
     // 绑定事件
@@ -609,92 +533,7 @@
       showStatus('页面配置已实时更新！', 'success');
     });
     
-    // 强制更新图片功能
-    function forceUpdateImage() {
-      console.log('强制更新图片被调用');
-      
-      // 显示更新提示
-      showStatus('正在强制更新图片...', 'info');
-      
-      // 优先使用localStorage中的更新图片地址
-      let imageUrl = localStorage.getItem('imageUrl');
-      if (imageUrl && imageUrl.trim()) {
-        imageUrl = imageUrl.trim();
-        console.log('强制更新：使用localStorage中的更新图片地址:', imageUrl);
-      } else {
-        // 如果没有更新地址，使用配置的固定图片地址
-        imageUrl = IMAGE_CONFIG.imageUrl;
-        console.log('强制更新：使用配置的固定图片地址:', imageUrl);
-      }
-      
-      // 强制清除图片缓存
-      guideImage.src = '';
-      
-      // 重新设置图片
-      if (imageUrl && imageUrl.trim()) {
-        console.log('强制设置图片地址:', imageUrl.trim());
-        
-        // 使用与setImageSource相同的逻辑
-        const imageUrlTrimmed = imageUrl.trim();
-        let finalImageUrl = imageUrlTrimmed;
-        
-        if (imageUrlTrimmed.startsWith('data:')) {
-          // Base64图片，直接使用
-          finalImageUrl = imageUrlTrimmed;
-        } else if (imageUrlTrimmed.startsWith('http')) {
-          // HTTP/HTTPS URL，直接使用，添加时间戳防止缓存
-          finalImageUrl = imageUrlTrimmed + '?t=' + Date.now();
-        } else if (imageUrlTrimmed.startsWith('/')) {
-          // 相对路径，添加当前域名和时间戳
-          const currentDomain = window.location.origin;
-          finalImageUrl = currentDomain + imageUrlTrimmed + '?t=' + Date.now();
-        } else {
-          // 其他情况，直接使用
-          finalImageUrl = imageUrlTrimmed;
-        }
-        
-        console.log('强制更新最终图片地址:', finalImageUrl);
-        guideImage.src = finalImageUrl;
-      } else {
-        console.log('没有图片地址，使用默认图片');
-        setImageSource();
-      }
-      
-      // 显示成功提示
-      setTimeout(() => {
-        showStatus('图片强制更新完成！', 'success');
-      }, 500);
-    }
-    
-    // 调试图片地址功能
-    function debugImageUrl() {
-      console.log('=== 调试图片地址信息 ===');
-      
-      // 检查localStorage中的图片地址
-      const savedImageUrl = localStorage.getItem('imageUrl');
-      console.log('localStorage中的图片地址:', savedImageUrl);
-      
-      // 检查配置中的图片地址
-      console.log('IMAGE_CONFIG中的图片地址:', IMAGE_CONFIG.imageUrl);
-      
-      // 检查当前图片的src
-      console.log('当前图片的src:', guideImage.src);
-      
-      // 显示调试信息
-      let debugInfo = '调试信息:\n';
-      debugInfo += `localStorage: ${savedImageUrl || '无'}\n`;
-      debugInfo += `配置地址: ${IMAGE_CONFIG.imageUrl}\n`;
-      debugInfo += `当前src: ${guideImage.src}\n`;
-      
-      alert(debugInfo);
-      
-      // 如果localStorage中有地址，强制使用它
-      if (savedImageUrl && savedImageUrl.trim()) {
-        console.log('强制使用localStorage中的地址');
-        guideImage.src = savedImageUrl.trim() + '?t=' + Date.now();
-        showStatus('已强制使用localStorage中的地址！', 'success');
-      }
-    }
+
 
     // 等待DOM完全加载后再初始化
     function initializeApp() {
