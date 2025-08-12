@@ -704,6 +704,7 @@
                             <button class="btn btn-success" onclick="updateImageUrl()">💾 更新并保存图片地址</button>
                             <button class="btn btn-warning" onclick="testImageUrl()">🔍 测试图片地址</button>
                             <button class="btn btn-secondary" onclick="loadImageUrl()">📂 加载已保存的地址</button>
+                            <button class="btn btn-info" onclick="testLocalStorage()">🔧 测试localStorage</button>
                         </div>
                     </div>
                 </div>
@@ -1318,6 +1319,11 @@
                 return;
             }
 
+            console.log('=== 更新图片地址调试信息 ===');
+            console.log('输入的图片地址:', imageUrl);
+            console.log('当前域名:', window.location.origin);
+            console.log('当前页面URL:', window.location.href);
+
             // 如果是相对路径，自动添加当前域名
             if (imageUrl.startsWith('/')) {
                 const currentDomain = window.location.origin;
@@ -1326,8 +1332,19 @@
             }
 
             // 保存图片URL到localStorage
+            console.log('保存到localStorage的地址:', imageUrl);
             localStorage.setItem('imageUrl', imageUrl);
             localStorage.setItem('configSaveTime', Date.now().toString());
+            
+            // 验证保存是否成功
+            const savedUrl = localStorage.getItem('imageUrl');
+            console.log('验证localStorage中的地址:', savedUrl);
+            
+            if (savedUrl === imageUrl) {
+                console.log('✅ localStorage保存成功');
+            } else {
+                console.log('❌ localStorage保存失败');
+            }
             
             // 更新预览
             document.getElementById('urlPreview').textContent = `当前图片地址: ${imageUrl}`;
@@ -1386,6 +1403,47 @@
             } else {
                 showStatus('没有找到已保存的图片地址', 'info');
             }
+        }
+
+        // 测试localStorage功能
+        function testLocalStorage() {
+            console.log('=== localStorage测试 ===');
+            console.log('当前域名:', window.location.origin);
+            console.log('当前页面URL:', window.location.href);
+            
+            // 测试写入
+            const testKey = 'testKey';
+            const testValue = 'testValue_' + Date.now();
+            console.log('测试写入:', testKey, '=', testValue);
+            localStorage.setItem(testKey, testValue);
+            
+            // 测试读取
+            const readValue = localStorage.getItem(testKey);
+            console.log('测试读取:', testKey, '=', readValue);
+            
+            // 测试图片地址
+            const imageUrl = localStorage.getItem('imageUrl');
+            console.log('当前图片地址:', imageUrl);
+            
+            // 显示结果
+            let result = `localStorage测试结果:\n`;
+            result += `当前域名: ${window.location.origin}\n`;
+            result += `测试写入: ${testKey} = ${testValue}\n`;
+            result += `测试读取: ${testKey} = ${readValue}\n`;
+            result += `图片地址: ${imageUrl || '无'}\n`;
+            
+            if (readValue === testValue) {
+                result += `✅ localStorage读写正常`;
+                showStatus('localStorage测试成功！', 'success');
+            } else {
+                result += `❌ localStorage读写异常`;
+                showStatus('localStorage测试失败！', 'error');
+            }
+            
+            alert(result);
+            
+            // 清理测试数据
+            localStorage.removeItem(testKey);
         }
 
         // 更新测试显示
